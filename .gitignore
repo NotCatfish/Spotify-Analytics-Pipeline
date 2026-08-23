@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Data Files (Crucial to prevent uploading raw or user data)
+*.csv
+*.json
+*.db
+*.sqlite
+*.sqlite3
+data/
+Cleaned_Data/
+archive/
+
+# Temporary files and scripts
+update_output.py
+update_plotly.py
+update_progress.py
+refactor_eda.py
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Excluded Docs and Internal Files
+.agents/
+docs/antigravityrule.txt
+docs/CAREER_NOTES_JAPAN.md
+docs/ML_PLAN.md
+AI_HANDOFF.md
+reports/
+ROADMAP.md
