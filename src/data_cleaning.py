@@ -19,7 +19,7 @@ def parse_args():
                         help="PostgreSQL Connection URI (if using postgres)")
     parser.add_argument("--output-type", type=str, choices=["sqlite", "postgres", "both"], default="sqlite",
                         help="Format to save the cleaned data (default: sqlite)")
-    parser.add_argument("--output-path", type=str, default="Cleaned_Data/Cleaned_Spotify_Data",
+    parser.add_argument("--output-path", type=str, default="data/processed/Cleaned_Spotify_Data",
                         help="Base path/name to save the output file (without extension)")
     args = parser.parse_args()
     
@@ -37,7 +37,7 @@ def parse_args():
         print("\nData cleaning is meant to store data in SQL formats.")
         args.output_type = input("Where do you want to save the cleaned data? (sqlite/postgres) [default: sqlite]: ").strip().lower() or "sqlite"
         if args.output_type == "sqlite":
-            args.output_path = input("Path to save the output SQLite DB (without .db) [default: Cleaned_Data/Cleaned_Spotify_Data]: ").strip() or "Cleaned_Data/Cleaned_Spotify_Data"
+            args.output_path = input("Path to save the output SQLite DB (without .db) [default: data/processed/Cleaned_Spotify_Data]: ").strip() or "data/processed/Cleaned_Spotify_Data"
         elif args.output_type == "postgres":
             args.db_uri = input("Enter PostgreSQL URI for output: ").strip()
             

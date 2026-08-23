@@ -17,7 +17,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Spotify Skip Prediction Pipeline")
     parser.add_argument("--input-type", type=str, choices=["csv", "json", "sqlite", "postgres"], default="csv",
                         help="Format of the input database (default: csv)")
-    parser.add_argument("--input-path", type=str, default="Cleaned_Data/Cleaned_Spotify_Data.csv",
+    parser.add_argument("--input-path", type=str, default="data/processed/Cleaned_Spotify_Data.csv",
                         help="Path to the cleaned data file")
     parser.add_argument("--db-uri", type=str, default="postgresql://user:password@localhost:5432/postgres",
                         help="PostgreSQL Connection URI (if using postgres)")
@@ -31,7 +31,7 @@ def parse_args():
         args.input_type = input("How is your cleaned data stored? (csv/json/sqlite/postgres) [default: csv]: ").strip().lower() or "csv"
         
         if args.input_type in ["csv", "json", "sqlite"]:
-            default_path = f"Cleaned_Data/Cleaned_Spotify_Data.{'db' if args.input_type=='sqlite' else args.input_type}"
+            default_path = f"data/processed/Cleaned_Spotify_Data.{'db' if args.input_type=='sqlite' else args.input_type}"
             args.input_path = input(f"Enter the path to the {args.input_type.upper()} file [default: {default_path}]: ").strip() or default_path
         elif args.input_type == "postgres":
             args.db_uri = input("Enter PostgreSQL URI: ").strip()
