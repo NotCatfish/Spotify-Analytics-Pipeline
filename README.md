@@ -36,12 +36,12 @@ The research workflow relies on structured database connections for rapid explor
 
 ```mermaid
 flowchart LR
-    A[Raw Streaming JSON Logs] --> B[01_data_cleaning.ipynb]
-    B --> C[(SQLite / PostgreSQL DB)]
-    C -->|SQL Connection / Queries| D[02_eda_visualizations.ipynb]
-    C -->|SQL Connection / Queries| E[03_ml_modeling.ipynb]
-    D --> F[Visual Analysis & Insights]
-    E --> G[Model Experiments & Validation]
+    A["Raw Spotify Logs<br/>(JSON)"] --> B["01_data_cleaning.ipynb<br/>(ETL & Compression)"]
+    B --> C[("SQL Database<br/>(SQLite / Postgres)")]
+    C -->|"SQL Queries"| D["02_eda_visualizations.ipynb<br/>(Visual Analysis)"]
+    C -->|"SQL Queries"| E["03_ml_modeling.ipynb<br/>(Model Experiments)"]
+    D --> F["Interactive Plots<br/>& Visual Insights"]
+    E --> G["Model Metrics<br/>& Evaluation"]
 ```
 
 ### 2. Standalone Production CLI Pipeline (`src/`)
@@ -49,14 +49,14 @@ The Python CLI scripts are decoupled and format-agnostic—capable of ingesting 
 
 ```mermaid
 flowchart LR
-    A[Raw Data<br/>JSON / SQLite / Postgres] --> B[src/data_cleaning.py]
-    B --> C[(Cleaned SQLite / Postgres DB)]
+    A["Raw Data<br/>(JSON / SQL)"] --> B["src/data_cleaning.py<br/>(ETL Engine)"]
+    B --> C[("Cleaned Database<br/>(SQLite / Postgres)")]
     
-    D[Cleaned Input<br/>CSV / JSON / SQLite / Postgres] --> E[src/eda_reporting.py]
-    D --> F[src/ml_modeling.py]
+    D["Cleaned Dataset<br/>(CSV / JSON / SQL)"] --> E["src/eda_reporting.py<br/>(EDA Engine)"]
+    D --> F["src/ml_modeling.py<br/>(ML Engine)"]
     
-    E --> G[reports/EDA_Report.md<br/>+ 60 Headless Figures]
-    F --> H[Evaluation Metrics<br/>& Saved Models]
+    E --> G["reports/EDA_Report.md<br/>(60+ Plots)"]
+    F --> H["Model Metrics<br/>& Saved Artifacts"]
 ```
 
 ---
