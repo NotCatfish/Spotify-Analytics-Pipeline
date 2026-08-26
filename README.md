@@ -6,6 +6,15 @@ This project processes raw Spotify JSON streams, cleanses and imputes the data, 
 
 ---
 
+## 📖 Table of Contents
+- [🛠️ Installation & Setup](#️-installation--setup)
+- [💻 How to Use](#-how-to-use)
+- [🚀 Architecture Overview](#-architecture-overview)
+- [📓 Notebooks](#-notebooks)
+- [📊 Sample Output (Sankey Funnel)](#-sample-output-sankey-funnel)
+
+---
+
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
