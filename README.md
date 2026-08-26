@@ -189,10 +189,13 @@ python src/ml_modeling.py
 
 ## <a id="research-notebooks"></a>📓 Research Notebooks
 
-Click to explore the step-by-step Jupyter notebooks:
-- [`01_data_cleaning.ipynb`](notebooks/01_data_cleaning.ipynb): Initial ETL, schema design, and column pruning experiments.
-- [`02_eda_visualizations.ipynb`](notebooks/02_eda_visualizations.ipynb): Interactive visualization drafting and distribution plots.
-- [`03_ml_modeling.ipynb`](notebooks/03_ml_modeling.ipynb): Model benchmarking, chronological validation, and concept drift experiments.
+Explore and run the step-by-step Jupyter notebooks directly in your browser:
+
+| Notebook | Description | Interactive Cloud Runner |
+| :--- | :--- | :--- |
+| [`01_data_cleaning.ipynb`](notebooks/01_data_cleaning.ipynb) | Initial ETL, schema design, and column pruning experiments. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/NotCatfish/Spotify-Analytics-Pipeline/blob/main/notebooks/01_data_cleaning.ipynb) |
+| [`02_eda_visualizations.ipynb`](notebooks/02_eda_visualizations.ipynb) | Interactive visualization drafting and distribution plots. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/NotCatfish/Spotify-Analytics-Pipeline/blob/main/notebooks/02_eda_visualizations.ipynb) |
+| [`03_ml_modeling.ipynb`](notebooks/03_ml_modeling.ipynb) | Model benchmarking, chronological validation, and concept drift experiments. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/NotCatfish/Spotify-Analytics-Pipeline/blob/main/notebooks/03_ml_modeling.ipynb) |
 
 *Note: All cell outputs have been scrubbed to protect Personally Identifiable Information (PII).*
 
