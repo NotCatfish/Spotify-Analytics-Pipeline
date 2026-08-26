@@ -187,7 +187,7 @@ python src/ml_modeling.py
 
 ---
 
-## <a id="notebooks"></a>📓 Research Notebooks
+## <a id="research-notebooks"></a>📓 Research Notebooks
 
 Click to explore the step-by-step Jupyter notebooks:
 - [`01_data_cleaning.ipynb`](notebooks/01_data_cleaning.ipynb): Initial ETL, schema design, and column pruning experiments.
