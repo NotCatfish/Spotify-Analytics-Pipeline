@@ -19,7 +19,6 @@ An end-to-end Python data engineering, automated exploratory data analysis (EDA)
 - [🛠️ Tech Stack](#tech-stack)
 - [🚀 Core Pipeline Modules](#core-pipeline-modules)
 - [🔬 The ML Engineering Journey](#ml-engineering-journey)
-- [📌 Project Notes & Execution Warning](#project-notes-execution-warning)
 - [📥 Obtaining Your Spotify Data](#obtaining-your-spotify-data)
 - [🤖 AI Agent / IDE Directive](#ai-agent-directive)
 - [💻 Getting Started & Usage](#getting-started-usage)
@@ -105,14 +104,6 @@ Leakage from         Random 80/20 Split      Chronological Split     Micro-Mood 
 1. **Eliminating Lookahead Bias:** A standard random train/test split allowed future listening patterns to leak into the past. Moving to a strict **Chronological Forward Split** restored real-world evaluation integrity.
 2. **Defeating Concept Drift:** Listener habits changed drastically over the multi-year history. Restricting the training window to recent years and engineering short-term **Micro-Mood** variables anchored ~60% of predictive power to immediate psychological context rather than stale historical preferences.
 3. **Threshold Tuning for Imbalance:** Because skips represent a small minority of listening events, default 0.50 decision thresholds were replaced with tuned precision-recall thresholds (XGBoost @ 0.632, Random Forest @ 0.330) to maximize F1 and precision.
-
----
-
-## <a id="project-notes-execution-warning"></a>📌 Project Notes & Execution Warning
-
-> [!WARNING]
-> **Genre Enrichment & Pipeline Execution Note:**  
-> Raw Spotify export files do not contain track genre metadata. In our research phase, genres were queried and tagged using the free Last.fm / FM Radio API. Because the standalone automated genre enrichment module is currently being overhauled and has not yet been committed to `src/data_cleaning.py`, running the pipeline directly on raw Spotify JSON without existing `genre_` columns will halt downstream EDA and ML scripts. If executing locally, users must integrate their own genre tagging or hook into the Last.fm API prior to running `src/eda_reporting.py` or `src/ml_modeling.py`.
 
 ---
 
