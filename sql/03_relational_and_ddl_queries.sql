@@ -9,19 +9,28 @@
 -- Let's pretend you are analyzing your Spotify data and you want to categorize your top artists.
 -- Write a query to CREATE a new table named 'artist_genres'. 
 -- It should have two columns: 'artist_name' (VARCHAR) and 'genre' (VARCHAR).
-
+CREATE TABLE artist_genre(
+    artist_name VARCHAR,
+    genre VARCHAR
+);
 
 -- QUESTION 2 (INSERT)
 -- Write an INSERT statement to add the following 3 rows into your new 'artist_genres' table:
 -- 1. 'LiSA', 'J-Pop'
 -- 2. 'Eminem', 'Hip-Hop'
 -- 3. 'RADWIMPS', 'Rock'
-
+INSERT INTO artist_genre (artist_name,genre)
+VALUES
+    ('LISA','J-Pop'),
+    ('Eminem','Hip-Hop'),
+    ('RADWIMPS','Rock');
 
 -- QUESTION 3 (UPDATE)
 -- You made a mistake! RADWIMPS is actually 'J-Rock', not just 'Rock'.
 -- Write an UPDATE statement to change the genre to 'J-Rock' WHERE the artist_name is 'RADWIMPS'.
-
+UPDATE artist_genre
+SET genre='J-Rock'
+WHERE artist_name='RADWIMPS';
 
 -- PART 2: JOINS
 
@@ -29,26 +38,48 @@
 -- Join your new 'artist_genres' table with the main 'streaming_history' table.
 -- Write a query that shows the artist_name, genre, and song_name. 
 -- Only show rows where the artist exists in BOTH tables (which is what INNER JOIN does).
-
+SELECT DISTINCT
+    sh.artist_name,
+    sh.song_name,
+    ag.genre
+FROM streaming_history sh
+INNER JOIN artist_genre ag 
+ON sh.artist_name=ag.artist_name
+LIMIT 100;
 
 -- QUESTION 5 (LEFT JOIN)
 -- Now write the exact same query, but use a LEFT JOIN (putting streaming_history on the left).
 -- Notice how the artists that are NOT in your genre table (like 'milet' or '樹海') still show up, 
 -- but their genre column says NULL!
+SELECT
+    sh.artist_name,
+    sh.song_name,
+    ag.genre
+FROM streaming_history sh
+LEFT JOIN artist_genre ag
+ON sh.artist_name=ag.artist_name
+LIMIT 100;
 
 
 -- QUESTION 6 (JOIN with Aggregation)
 -- Using an INNER JOIN between streaming_history and artist_genres, calculate the total sec_played FOR EACH GENRE.
 -- (You want to group by genre, and sum the sec_played).
-
+SELECT
+    SUM(sh.sec_played) AS Total_play_time_in_sec,
+    ag.genre
+FROM streaming_history sh
+INNER JOIN artist_genre ag
+ON sh.artist_name=ag.artist_name
+GROUP BY genre;
 
 -- PART 3: CLEANUP
-
 -- QUESTION 7 (TRUNCATE)
 -- TRUNCATE deletes all the data inside a table, but leaves the empty table structure intact.
 -- Write a query to TRUNCATE your 'artist_genres' table.
-
+TRUNCATE TABLE artist_genre;
 
 -- QUESTION 8 (DROP)
 -- DROP deletes the entire table completely from the database.
 -- Write a query to DROP your 'artist_genres' table.
+DROP TABLE artist_genre;
+

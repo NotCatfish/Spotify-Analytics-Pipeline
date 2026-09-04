@@ -72,3 +72,15 @@ With the Champion Model selected and tuned to defeat Concept Drift, the Jupyter 
 > **We have officially cancelled the MLOps deployment phase.** 
 > To hit the August 31st deadline for the Mercari Summer 2027 application cycle, we have pivoted strictly to a **Data Analyst Intern** roadmap. 
 > All Machine Learning work is frozen. The immediate focus is a 9-day sprint grinding LeetCode SQL (Window Functions, CTEs) and Product Analytics to pass the Mercari Online Assessment (OA).
+
+---
+
+### September 2026: Return to Machine Learning & Data Engineering
+The user has resumed work on the ML Pipeline!
+- **Last.fm API Integration:** Successfully fetched genre metadata for 14,813 unique songs with robust rate-limiting and check-pointing.
+- **Cartesian Merge Explosion:** Discovered and fixed a data leak where the Last.fm dataset had duplicate keys, causing the Spotify history to balloon to 295k rows. Fixed via `.drop_duplicates(subset=["song_name", "artist_name"])`.
+- **Artist-Level Metadata Fallback:** Queried Last.fm `artist.getTopTags` endpoint to enrich songs lacking track-level tags, capturing community-curated genres for 2,411 artists.
+- **4-Tier Imputation Architecture:** Implemented a robust hierarchical fallback (Track tags $\rightarrow$ Artist tags $\rightarrow$ Artist Top-3 imputation $\rightarrow$ Cold start flag).
+- **Cold-Start Drastic Reduction:** Slashed unknown streams from 153,456 (71.35%) down to only 8,765 (4.08%), achieving 95.92% verified genre coverage across 340 distinct genres.
+- **High-Performance Database Layer:** Synchronized both a local portable SQLite database (turbo-charged via memory pragma) and an enterprise PostgreSQL server (streaming via native `COPY`).
+- **Next Steps:** Proceeding with Exploratory Data Analysis (EDA) and Machine Learning Feature Engineering (skip prediction & recommendation clustering).
