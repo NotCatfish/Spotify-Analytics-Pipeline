@@ -4,7 +4,7 @@ This document highlights the deliberate engineering, linear algebra, and data op
 
 ---
 
-## ⚡ Executive TL;DR: Smart Methods vs. Standard Approaches
+## Executive TL;DR: Smart Methods vs. Standard Approaches
 
 | Analytical Challenge | Naive / Standard Approach | Our Smart / Mathematical Method | Measurable Impact |
 | :--- | :--- | :--- | :--- |

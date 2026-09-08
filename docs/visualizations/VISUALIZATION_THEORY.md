@@ -1,10 +1,10 @@
-# 🎨 Spotify Data Visualization Theory & Design System Guide
+# Spotify Data Visualization Theory & Design System Guide
 
 This document explains the cognitive, mathematical, and aesthetic design rationale behind the 21 visualizations implemented in [`pipeline/02_eda_visualizations.py`](../../pipeline/02_eda_visualizations.py) and rendered in [`reports/EDA_Report.md`](../../reports/EDA_Report.md). It outlines why each chart archetype was chosen over common naive alternatives, how the **Japanese Winter Night** design system reduces cognitive fatigue, and the rendering optimizations used to eliminate memory leaks.
 
 ---
 
-## ⚡ Executive Summary: Chart Selection Rationale Matrix
+## Executive Summary: Chart Selection Rationale Matrix
 
 | Business / Analytical Objective | Naive Alternative | Chosen Visual Archetype | Cognitive & Mathematical Advantage |
 | :--- | :--- | :--- | :--- |

@@ -4,7 +4,7 @@ This document is the empirical research log for the Spotify Skip Prediction Mode
 
 ---
 
-## 📊 Summary of Model Progression (Attempts 1–6)
+## Summary of Model Progression (Attempts 1–6)
 
 | Attempt | Split Strategy | Feature Set | Primary Model | Accuracy | ROC-AUC | Recall | Precision | Core Diagnosis & Key Lesson Learned |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |

@@ -1,4 +1,4 @@
-# 📑 Spotify EDA Metrics & Table Catalog
+# Spotify EDA Metrics & Table Catalog
 
 This catalog documents every analytical metric, tabular aggregation, and ranking calculated across the exploratory analysis pipeline. All metrics dynamically adapt to the user's single `top_n` configuration prompt (default: 10) and compile directly into the executive markdown report at [`reports/EDA_Report.md`](../../reports/EDA_Report.md).
 
@@ -14,7 +14,7 @@ This catalog documents every analytical metric, tabular aggregation, and ranking
 
 ---
 
-## <a id="section-1-top-charts"></a>🏆 Section 1: The "Top Charts" (Volume & Affinity Rankings)
+## <a id="section-1-top-charts"></a>Section 1: The "Top Charts" (Volume & Affinity Rankings)
 
 ### 1.1 All-Time Top N Artists
 * **Objective:** Identify the core artist discographies that dominate total playback history.
@@ -55,7 +55,7 @@ This catalog documents every analytical metric, tabular aggregation, and ranking
 
 ---
 
-## <a id="section-2-temporal-habits"></a>🕒 Section 2: Temporal & Behavioral Habits (Time-Series)
+## <a id="section-2-temporal-habits"></a>Section 2: Temporal & Behavioral Habits (Time-Series)
 
 ### 2.1 Yearly & Monthly Listening Volume
 * **Objective:** Measure long-term user retention, platform engagement trends, and lifetime streaming volume.
@@ -89,7 +89,7 @@ This catalog documents every analytical metric, tabular aggregation, and ranking
 
 ---
 
-## <a id="section-3-skip-behavior"></a>⏭️ Section 3: Engagement & Skip Behavior
+## <a id="section-3-skip-behavior"></a>Section 3: Engagement & Skip Behavior
 
 ### 3.1 Artist Skip Rates (Impatience Index)
 * **Objective:** Rank artists with significant stream volume ($\ge 20$ plays) by the percentage of tracks skipped before completion.
@@ -119,7 +119,7 @@ This catalog documents every analytical metric, tabular aggregation, and ranking
 
 ---
 
-## <a id="section-4-technical-geographic"></a>💻 Section 4: Technical & Geographic Metrics
+## <a id="section-4-technical-geographic"></a>Section 4: Technical & Geographic Metrics
 
 ### 4.1 Platform & Device Distribution
 * **Objective:** Track the hardware ecosystem utilized to access Spotify over 7 years.
@@ -143,7 +143,7 @@ This catalog documents every analytical metric, tabular aggregation, and ranking
 
 ---
 
-## <a id="section-5-niche-metrics"></a>🕵️ Section 5: Niche & Advanced Behavioral Metrics
+## <a id="section-5-niche-metrics"></a>Section 5: Niche & Advanced Behavioral Metrics
 
 ### 5.1 The "Loyalty" Metric (Unbroken Monthly Streaks)
 * **Objective:** Identify artists listened to at least once *every single month* over extended consecutive month stretches.

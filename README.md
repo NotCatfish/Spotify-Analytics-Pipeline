@@ -1,37 +1,37 @@
-# 🎵 Spotify Analytics & Machine Learning Pipeline
+# Spotify Analytics & Machine Learning Pipeline
 
 An end-to-end Python data engineering, automated exploratory data analysis (EDA), and predictive machine learning pipeline that transforms raw Spotify listening logs into deep behavioral insights and user skip predictions.
 
 ---
 
-## ⚡ Key Highlights & Engineering Wins
+## Key Highlights & Engineering Wins
 
-- 💾 **85% Memory Optimization:** Compressed in-memory dataset footprint from **277 MB down to 42.5 MB** using targeted `int8`/`category` downcasting.
-- ⚡ **>300x Linear Algebra Acceleration:** Replaced expensive multi-genre `.groupby()` loops with compiled BLAS dot products (`.T.dot()`), computing play counts and duration across 340+ genres in under 0.05s.
-- 📉 **9,157x Memory Reduction in Temporal Trends:** Used chunked temporal Map-Reduce instead of `.str.split().explode()`, dropping intermediate RAM from 1.6 GB to 0.18 MB.
-- 🔄 **High-Throughput Streaming Database Layer:** SQLite in-memory pragmas and PostgreSQL native buffer streaming via `COPY FROM STDIN` (slashing export time from 15 mins to 3.2s).
-- 📊 **Automated Headless Markdown Report:** Generates a 5-section executive dossier with 21 Japanese Winter Night figures into [`reports/EDA_Report.md`](reports/EDA_Report.md).
-- 🛡️ **Zero Temporal Data Leakage:** Strict **chronological walk-forward split** (2023–2024 train, 2025+ test) with dynamic target encoding.
-- 🧠 **Defeated Severe Concept Drift:** Solved a user behavioral shift (skip rates dropping from 31% down to 4%) through micro-mood feature engineering, achieving **97% accuracy** (ROC-AUC: 0.824).
-- 📘 **Technical Blueprint:** Read the complete mathematical derivations and engineering rationale in [`docs/eda/EDA_THEORY_AND_METHODS.md`](docs/eda/EDA_THEORY_AND_METHODS.md).
-
----
-
-## 📖 Table of Contents
-- [📐 System Architecture](#system-architecture)
-- [🛠️ Tech Stack](#tech-stack)
-- [🚀 Core Pipeline Modules](#core-pipeline-modules)
-- [🔬 The ML Engineering Journey](#ml-engineering-journey)
-- [📥 Obtaining Your Spotify Data](#obtaining-your-spotify-data)
-- [🤖 AI Agent / IDE Directive](#ai-agent-directive)
-- [💻 Getting Started & Usage](#getting-started-usage)
-- [📓 Research Notebooks](#research-notebooks)
-- [👤 Author & Connect](#author-connect)
-- [📄 License](#license)
+- **85% Memory Optimization:** Compressed in-memory dataset footprint from **277 MB down to 42.5 MB** using targeted `int8`/`category` downcasting.
+- **>300x Linear Algebra Acceleration:** Replaced expensive multi-genre `.groupby()` loops with compiled BLAS dot products (`.T.dot()`), computing play counts and duration across 340+ genres in under 0.05s.
+- **9,157x Memory Reduction in Temporal Trends:** Used chunked temporal Map-Reduce instead of `.str.split().explode()`, dropping intermediate RAM from 1.6 GB to 0.18 MB.
+- **High-Throughput Streaming Database Layer:** SQLite in-memory pragmas and PostgreSQL native buffer streaming via `COPY FROM STDIN` (slashing export time from 15 mins to 3.2s).
+- **Automated Headless Markdown Report:** Generates a 5-section executive dossier with 21 Japanese Winter Night figures into [`reports/EDA_Report.md`](reports/EDA_Report.md).
+- **Zero Temporal Data Leakage:** Strict **chronological walk-forward split** (2023–2024 train, 2025+ test) with dynamic target encoding.
+- **Defeated Severe Concept Drift:** Solved a user behavioral shift (skip rates dropping from 31% down to 4%) through micro-mood feature engineering, achieving **97% accuracy** (ROC-AUC: 0.824).
+- **Technical Blueprint:** Read the complete mathematical derivations and engineering rationale in [`docs/eda/EDA_THEORY_AND_METHODS.md`](docs/eda/EDA_THEORY_AND_METHODS.md).
 
 ---
 
-## <a id="system-architecture"></a>📐 System Architecture
+## Table of Contents
+- [System Architecture](#system-architecture)
+- [Tech Stack](#tech-stack)
+- [Core Pipeline Modules](#core-pipeline-modules)
+- [The ML Engineering Journey](#ml-engineering-journey)
+- [Obtaining Your Spotify Data](#obtaining-your-spotify-data)
+- [AI Agent / IDE Directive](#ai-agent-directive)
+- [Getting Started & Usage](#getting-started-usage)
+- [Research Notebooks](#research-notebooks)
+- [Author & Connect](#author-connect)
+- [License](#license)
+
+---
+
+## <a id="system-architecture"></a>System Architecture
 
 ### 1. Research & Prototyping Workflow (`notebooks/`)
 The research workflow relies on structured database connections for rapid exploratory querying, visual validation, and model experimentation:
@@ -63,7 +63,7 @@ flowchart LR
 
 ---
 
-## <a id="tech-stack"></a>🛠️ Tech Stack
+## <a id="tech-stack"></a>Tech Stack
 
 - **Language:** Python 3.9+
 - **Data Engineering & Analysis:** Pandas, NumPy, SQLAlchemy, Psycopg2
@@ -73,7 +73,7 @@ flowchart LR
 
 ---
 
-## <a id="core-pipeline-modules"></a>🚀 Core Pipeline Modules
+## <a id="core-pipeline-modules"></a>Core Pipeline Modules
 
 ### 1. [`pipeline/01_data_cleaning.py`](pipeline/01_data_cleaning.py) (ETL & Ingestion Engine)
 - Accepts raw Spotify JSON streams, SQLite databases, or PostgreSQL connections.
@@ -95,7 +95,7 @@ flowchart LR
 
 ---
 
-## <a id="ml-engineering-journey"></a>🔬 The ML Engineering Journey
+## <a id="ml-engineering-journey"></a>The ML Engineering Journey
 
 During model development in the research phase, three critical machine learning challenges were identified and systematically resolved:
 
@@ -114,7 +114,7 @@ Leakage from         Random 80/20 Split      Chronological Split     Micro-Mood 
 
 ---
 
-## <a id="obtaining-your-spotify-data"></a>📥 Obtaining Your Spotify Data
+## <a id="obtaining-your-spotify-data"></a>Obtaining Your Spotify Data
 
 To run this pipeline on your own personal listening history:
 
@@ -132,7 +132,7 @@ Spotify-Analytics-Pipeline/
 
 ---
 
-## <a id="ai-agent-directive"></a>🤖 AI Agent / IDE Directive
+## <a id="ai-agent-directive"></a>AI Agent / IDE Directive
 
 If you are an AI assistant (Cursor, Windsurf, Copilot, or terminal agent) executing this project for the user, follow these directives:
 
@@ -148,7 +148,7 @@ If you are an AI assistant (Cursor, Windsurf, Copilot, or terminal agent) execut
 
 ---
 
-## <a id="getting-started-usage"></a>💻 Getting Started & Usage
+## <a id="getting-started-usage"></a>Getting Started & Usage
 
 ### Prerequisites
 - Python 3.9+
@@ -185,7 +185,7 @@ python pipeline/03_ml_modeling.py
 
 ---
 
-## <a id="research-notebooks"></a>📓 Research Notebooks
+## <a id="research-notebooks"></a>Research Notebooks
 
 Explore and run the step-by-step Jupyter notebooks directly in your browser:
 
@@ -199,17 +199,17 @@ Explore and run the step-by-step Jupyter notebooks directly in your browser:
 
 ---
 
-## <a id="author-connect"></a>👤 Author & Connect
+## <a id="author-connect"></a>Author & Connect
 
 **Indraneel Samanta**  
 *Aspiring Data & AI Engineer | B.Tech in AIML @ DJSCE*
 
-- 🌐 **Portfolio**: [indraneelsamanta.vercel.app](https://indraneelsamanta.vercel.app/)
-- 🔗 **LinkedIn**: [linkedin.com/in/indraneel-samanta](https://www.linkedin.com/in/indraneel-samanta/)
-- 🐙 **GitHub**: [@NotCatfish](https://github.com/NotCatfish)
+- **Portfolio**: [indraneelsamanta.vercel.app](https://indraneelsamanta.vercel.app/)
+- **LinkedIn**: [linkedin.com/in/indraneel-samanta](https://www.linkedin.com/in/indraneel-samanta/)
+- **GitHub**: [@NotCatfish](https://github.com/NotCatfish)
 
 ---
 
-## <a id="license"></a>📄 License
+## <a id="license"></a>License
 
 This project is open-source and available under the [MIT License](LICENSE).

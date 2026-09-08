@@ -113,7 +113,7 @@ The project has achieved complete end-to-end realization across both research an
   * Documented the complete **Japanese Winter Night** design system (`#0D1321` canvas, `#111827` axes, Meiryo multi-byte typography, vibrant neon tokens) and zero-leak Matplotlib/Kaleido rendering optimizations.
 * **Theory & Mathematical Optimization Master Note (`docs/eda/EDA_THEORY_AND_METHODS.md`):**
   * Renamed `EDA_PLAN.md` and moved to `docs/eda/EDA_THEORY_AND_METHODS.md`.
-  * Positioned the **⚡ Executive TL;DR: Smart Methods vs. Standard Approaches** comparison table at the very top of the file for instant 15-second recruiter visibility.
+  * Positioned the **Executive TL;DR: Smart Methods vs. Standard Approaches** comparison table at the very top of the file for instant 15-second recruiter visibility.
 * **Visualization Catalog Renaming (`docs/visualizations/VISUALIZATION_CATALOG.md`):**
   * Renamed `VISUALISATION_PLAN.md` and moved to `docs/visualizations/VISUALIZATION_CATALOG.md`.
 * **ML Experiment Log & Honest Assessment (`docs/ml/ML_PROGRESS_LOG.md`):**
