@@ -191,7 +191,7 @@ Analyzing user patience (average listening duration prior to skipping) using raw
    ```
 2. **True Aggregate Mean vs. Mean-of-Means:**
    Rather than computing the average of pre-averaged monthly groups (which introduces statistical sample-size bias), we computed the true aggregate mean via explicit component division:
-   $$\text{Attention Span} = \frac{\sum \text{sec\_played}}{\text{Total Skip Count}}$$
+   $$\text{Attention Span} = \frac{\sum \text{sec played}}{\text{Total Skip Count}}$$
 
 ### Why and Business Impact
 * Revealed a clean, monotonic trendline demonstrating that median attention span declined from 82 seconds in 2019 to 34 seconds in 2025, validating the mobile habituation hypothesis.

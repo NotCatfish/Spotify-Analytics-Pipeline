@@ -84,8 +84,8 @@ This catalog documents every analytical metric, tabular aggregation, and ranking
 * **Objective:** Determine the user's longest continuous streak of consecutive calendar days streaming Spotify.
 * **Input Columns:** `time_stamp`.
 * **Aggregation Method:** Vectorized Gaps-and-Islands:
-  $$\Delta = \text{diff}(\text{unique\_dates}) \quad \rightarrow \quad \text{island\_id} = \sum (\Delta \neq 1 \text{ day})$$
-  Longest streak is computed as $\max(\text{size}(\text{island\_id}))$.
+  $$\Delta = \text{diff}(\text{unique dates}) \quad \rightarrow \quad \text{island id} = \sum (\Delta \neq 1 \text{ day})$$
+  Longest streak is computed as $\max(\text{size}(\text{island id}))$.
 
 ---
 

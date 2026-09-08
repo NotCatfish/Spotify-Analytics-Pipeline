@@ -26,10 +26,10 @@ Data visualizations should not look like default Excel spreadsheets. High-calibe
 ### $\color{#38BDF8}\text{1.1 Color Architecture and Palette Tokens}$
 All figures are constructed using the custom **Japanese Winter Night** palette:
 
-* **$\color{#38BDF8}\text{Canvas Background (\#0D1321):}$** Deep midnight navy. Reduces eye strain during extended analytical sessions and provides OLED-depth contrast.
-* **$\color{#38BDF8}\text{Subplot and Axes Background (\#111827):}$** Dark charcoal slate. Establishes clear visual containment and cards for subplots.
-* **$\color{#38BDF8}\text{Primary Text and Labels (\#E0E6ED):}$** Soft starlight gray. Yields a **14.5:1 WCAG AAA contrast ratio** against the dark background, maximizing legibility without harsh white glare.
-* **$\color{#38BDF8}\text{Gridlines and Ticks (\#374151 / \#4B5563):}$** Subdued slate. Provides spatial reference lines without visual clutter.
+* **$\color{#38BDF8}\text{Canvas Background}$** (`#0D1321`): Deep midnight navy. Reduces eye strain during extended analytical sessions and provides OLED-depth contrast.
+* **$\color{#38BDF8}\text{Subplot and Axes Background}$** (`#111827`): Dark charcoal slate. Establishes clear visual containment and cards for subplots.
+* **$\color{#38BDF8}\text{Primary Text and Labels}$** (`#E0E6ED`): Soft starlight gray. Yields a **14.5:1 WCAG AAA contrast ratio** against the dark background, maximizing legibility without harsh white glare.
+* **$\color{#38BDF8}\text{Gridlines and Ticks}$** (`#374151` / `#4B5563`): Subdued slate. Provides spatial reference lines without visual clutter.
 * **$\color{#38BDF8}\text{Vibrant Accent Tokens:}$**
   * **Electric Cyan (`#00F2FE`):** Primary focal highlight (high-velocity streams, dominant artists).
   * **Cyber Violet (`#7F00FF`):** Secondary categorical contrast (algorithmic autoplay, technical metrics).
