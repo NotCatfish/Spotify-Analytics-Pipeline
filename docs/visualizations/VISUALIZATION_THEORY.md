@@ -4,7 +4,7 @@ This document explains the cognitive, mathematical, and aesthetic design rationa
 
 ---
 
-## $\color{#F59E0B}{\text{Executive Summary: Chart Selection Rationale Matrix}}$
+## $\color{#F59E0B}\text{Executive Summary: Chart Selection Rationale Matrix}$
 
 | Business / Analytical Objective | Naive Alternative | Chosen Visual Archetype | Cognitive and Mathematical Advantage |
 | :--- | :--- | :--- | :--- |

@@ -95,7 +95,7 @@ This catalog documents every analytical metric, tabular aggregation, and ranking
 * **Objective:** Rank artists with significant stream volume ($\ge 20$ plays) by the percentage of tracks skipped before completion.
 * **Input Columns:** `artist_name`, `reason_end`.
 * **Skip Definition:** `is_skip = (reason_end == 'fwdbtn')`.
-* **Aggregation Method:** Group by `artist_name`, filter `count >= 20`, compute $\frac{\sum \text{is\_skip}}{\text{count}}$, sort descending.
+* **Aggregation Method:** Group by `artist_name`, filter `count >= 20`, compute $\frac{\sum \text{is skip}}{\text{count}}$, sort descending.
 
 ### $\color{#38BDF8}\text{3.2 Song Skip Rates (Repeat Skip Offenders)}$
 * **Objective:** Isolate individual tracks ($\ge 10$ plays) that trigger immediate user rejection.
@@ -158,7 +158,7 @@ This catalog documents every analytical metric, tabular aggregation, and ranking
 ### $\color{#38BDF8}\text{5.3 True Attention Span Decay}$
 * **Objective:** Measure the average seconds played before a skip occurs, filtered to standard song lengths ($\le 630$ seconds) to eliminate podcast distortion.
 * **Input Columns:** `year`, `sec_played`, `reason_end`.
-* **Aggregation Method:** Filter `reason_end == 'fwdbtn'` and `sec_played <= 630`; group by year, calculating $\frac{\sum \text{sec\_played}}{N}$.
+* **Aggregation Method:** Filter `reason_end == 'fwdbtn'` and `sec_played <= 630`; group by year, calculating $\frac{\sum \text{sec played}}{N}$.
 
 ### $\color{#38BDF8}\text{5.4 Session Binge Duration Distribution}$
 * **Objective:** Segment continuous listening sessions separated by $\ge 30$ minutes of silence to analyze binge listening habits.
