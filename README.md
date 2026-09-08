@@ -6,14 +6,14 @@ An end-to-end Python data engineering, automated exploratory data analysis (EDA)
 
 ## Key Highlights & Engineering Wins
 
-- $\color{#2ea44f}\textsf{\textbf{85\\% Memory Optimization:}}$ Compressed in-memory dataset footprint from **277 MB down to 42.5 MB** using targeted `int8`/`category` downcasting.
-- $\color{#00bcd4}\textsf{\textbf{>300x Linear Algebra Acceleration:}}$ Replaced expensive multi-genre `.groupby()` loops with compiled BLAS dot products (`.T.dot()`), computing play counts and duration across 340+ genres in under 0.05s.
-- $\color{#a855f7}\textsf{\textbf{9,157x Memory Reduction in Temporal Trends:}}$ Used chunked temporal Map-Reduce instead of `.str.split().explode()`, dropping intermediate RAM from 1.6 GB to 0.18 MB.
-- $\color{#f59e0b}\textsf{\textbf{High-Throughput Streaming Database Layer:}}$ SQLite in-memory pragmas and PostgreSQL native buffer streaming via `COPY FROM STDIN` (slashing export time from 15 mins to 3.2s).
-- $\color{#ec4899}\textsf{\textbf{Automated Headless Markdown Report:}}$ Generates a 5-section executive dossier with 21 Japanese Winter Night figures into [`reports/EDA_Report.md`](reports/EDA_Report.md).
-- $\color{#10b981}\textsf{\textbf{Zero Temporal Data Leakage:}}$ Strict **chronological walk-forward split** (2023–2024 train, 2025+ test) with dynamic target encoding.
-- $\color{#3b82f6}\textsf{\textbf{Defeated Severe Concept Drift:}}$ Solved a user behavioral shift (skip rates dropping from 31% down to 4%) through micro-mood feature engineering, achieving **97% accuracy** (ROC-AUC: 0.824).
-- $\color{#6366f1}\textsf{\textbf{Technical Blueprint:}}$ Read the complete mathematical derivations and engineering rationale in [`docs/eda/EDA_THEORY_AND_METHODS.md`](docs/eda/EDA_THEORY_AND_METHODS.md).
+- **85% Memory Optimization:** Compressed in-memory dataset footprint from **277 MB down to 42.5 MB** using targeted `int8`/`category` downcasting.
+- **>300x Linear Algebra Acceleration:** Replaced expensive multi-genre `.groupby()` loops with compiled BLAS dot products (`.T.dot()`), computing play counts and duration across 340+ genres in under 0.05s.
+- **9,157x Memory Reduction in Temporal Trends:** Used chunked temporal Map-Reduce instead of `.str.split().explode()`, dropping intermediate RAM from 1.6 GB to 0.18 MB.
+- **High-Throughput Streaming Database Layer:** SQLite in-memory pragmas and PostgreSQL native buffer streaming via `COPY FROM STDIN` (slashing export time from 15 mins to 3.2s).
+- **Automated Headless Markdown Report:** Generates a 5-section executive dossier with 21 Japanese Winter Night figures into [`reports/EDA_Report.md`](reports/EDA_Report.md).
+- **Zero Temporal Data Leakage:** Strict **chronological walk-forward split** (2023–2024 train, 2025+ test) with dynamic target encoding.
+- **Defeated Severe Concept Drift:** Solved a user behavioral shift (skip rates dropping from 31% down to 4%) through micro-mood feature engineering, achieving **97% accuracy** (ROC-AUC: 0.824).
+- **Technical Blueprint:** Read the complete mathematical derivations and engineering rationale in [`docs/eda/EDA_THEORY_AND_METHODS.md`](docs/eda/EDA_THEORY_AND_METHODS.md).
 
 ---
 
@@ -65,11 +65,11 @@ flowchart LR
 
 ## <a id="tech-stack"></a>Tech Stack
 
-- **Language:** Python 3.9+
-- **Data Engineering & Analysis:** Pandas, NumPy, SQLAlchemy, Psycopg2
-- **Databases:** SQLite, PostgreSQL
-- **Machine Learning:** Scikit-Learn, XGBoost, Joblib
-- **Data Visualization:** Plotly, Seaborn, Matplotlib
+- **Language:** `Python 3.9+`
+- **Data Engineering & Analysis:** `Pandas`, `NumPy`, `SQLAlchemy`, `Psycopg2`
+- **Databases:** `SQLite`, `PostgreSQL`
+- **Machine Learning:** `Scikit-Learn`, `XGBoost`, `Joblib`
+- **Data Visualization:** `Plotly`, `Seaborn`, `Matplotlib`
 
 ---
 
