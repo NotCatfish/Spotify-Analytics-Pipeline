@@ -6,7 +6,7 @@ An end-to-end Python data engineering, automated exploratory data analysis (EDA)
 
 ## Key Highlights & Engineering Wins
 
-- $\color{#2ea44f}\textsf{\textbf{85\% Memory Optimization:}}$ Compressed in-memory dataset footprint from **277 MB down to 42.5 MB** using targeted `int8`/`category` downcasting.
+- $\color{#2ea44f}\textsf{\textbf{85\\% Memory Optimization:}}$ Compressed in-memory dataset footprint from **277 MB down to 42.5 MB** using targeted `int8`/`category` downcasting.
 - $\color{#00bcd4}\textsf{\textbf{>300x Linear Algebra Acceleration:}}$ Replaced expensive multi-genre `.groupby()` loops with compiled BLAS dot products (`.T.dot()`), computing play counts and duration across 340+ genres in under 0.05s.
 - $\color{#a855f7}\textsf{\textbf{9,157x Memory Reduction in Temporal Trends:}}$ Used chunked temporal Map-Reduce instead of `.str.split().explode()`, dropping intermediate RAM from 1.6 GB to 0.18 MB.
 - $\color{#f59e0b}\textsf{\textbf{High-Throughput Streaming Database Layer:}}$ SQLite in-memory pragmas and PostgreSQL native buffer streaming via `COPY FROM STDIN` (slashing export time from 15 mins to 3.2s).
