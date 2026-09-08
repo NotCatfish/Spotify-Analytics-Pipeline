@@ -1,30 +1,19 @@
 # Spotify Analytics & Machine Learning Pipeline
 
-<p align="left">
-  <img src="https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/XGBoost-97.0%25_Accuracy-2ea44f?style=for-the-badge" alt="XGBoost" />
-  <img src="https://img.shields.io/badge/ROC--AUC-0.824-3b82f6?style=for-the-badge" alt="ROC-AUC" />
-  <img src="https://img.shields.io/badge/RAM_Saved-85%25-00bcd4?style=for-the-badge" alt="RAM" />
-  <img src="https://img.shields.io/badge/PostgreSQL-Streaming_COPY-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="Postgres" />
-  <img src="https://img.shields.io/badge/License-MIT-f59e0b?style=for-the-badge" alt="License" />
-</p>
-
 An end-to-end Python data engineering, automated exploratory data analysis (EDA), and predictive machine learning pipeline that transforms raw Spotify listening logs into deep behavioral insights and user skip predictions.
 
 ---
 
 ## Key Highlights & Engineering Wins
 
-| Innovation Area | Metric / Achievement | Engineering Implementation |
-| :--- | :--- | :--- |
-| **Memory Optimization** | ![RAM Saved](https://img.shields.io/badge/RAM_Saved-85%25-2ea44f?style=flat-square) | Compressed in-memory dataset from **277 MB down to 42.5 MB** via targeted `int8`/`category` downcasting |
-| **Linear Algebra Speedup** | ![300x Faster](https://img.shields.io/badge/BLAS_Dot_Product->300x_Faster-00bcd4?style=flat-square) | Replaced multi-genre `.groupby()` loops with compiled BLAS `.T.dot()` matrix operations (<0.05s runtime) |
-| **Temporal Map-Reduce** | ![9157x Drop](https://img.shields.io/badge/Map--Reduce-9%2C157x_Less_RAM-7c3aed?style=flat-square) | Chunked temporal Map-Reduce replacing `.explode()`, dropping intermediate RAM from **1.6 GB to 0.18 MB** |
-| **High-Throughput Streaming** | ![3.2s Export](https://img.shields.io/badge/PostgreSQL_COPY-15m_→_3.2s-f59e0b?style=flat-square) | SQLite in-memory pragmas and PostgreSQL native buffer streaming via `COPY FROM STDIN` |
-| **Automated Reporting** | ![21 Figures](https://img.shields.io/badge/Executive_Dossier-21_Figures-ec4899?style=flat-square) | Headless single-prompt generation of a 5-section Markdown dossier with 21 Japanese Winter Night figures in [`reports/EDA_Report.md`](reports/EDA_Report.md) |
-| **Zero Temporal Leakage** | ![Zero Leakage](https://img.shields.io/badge/Validation-Walk--Forward_Split-10b981?style=flat-square) | Strict **chronological walk-forward split** (2023–2024 train, 2025+ test) with dynamic target encoding |
-| **Concept Drift Mitigation** | ![97% Accuracy](https://img.shields.io/badge/Skip_Predictor-97.0%25_Accuracy-3b82f6?style=flat-square) | Overcame 31% → 4% skip rate collapse via micro-mood features (`seconds_since_last_skip`, `skips_last_15m`), scoring **0.824 ROC-AUC** |
-| **Architectural Blueprint** | ![Theory Guide](https://img.shields.io/badge/Deep_Dive-Technical_Blueprint-6366f1?style=flat-square) | Complete mathematical derivations, complexity analysis, and recruiter notes in [`docs/eda/EDA_THEORY_AND_METHODS.md`](docs/eda/EDA_THEORY_AND_METHODS.md) |
+- **85% Memory Optimization:** Compressed in-memory dataset footprint from **277 MB down to 42.5 MB** using targeted `int8`/`category` downcasting.
+- **>300x Linear Algebra Acceleration:** Replaced expensive multi-genre `.groupby()` loops with compiled BLAS dot products (`.T.dot()`), computing play counts and duration across 340+ genres in under 0.05s.
+- **9,157x Memory Reduction in Temporal Trends:** Used chunked temporal Map-Reduce instead of `.str.split().explode()`, dropping intermediate RAM from 1.6 GB to 0.18 MB.
+- **High-Throughput Streaming Database Layer:** SQLite in-memory pragmas and PostgreSQL native buffer streaming via `COPY FROM STDIN` (slashing export time from 15 mins to 3.2s).
+- **Automated Headless Markdown Report:** Generates a 5-section executive dossier with 21 Japanese Winter Night figures into [`reports/EDA_Report.md`](reports/EDA_Report.md).
+- **Zero Temporal Data Leakage:** Strict **chronological walk-forward split** (2023–2024 train, 2025+ test) with dynamic target encoding.
+- **Defeated Severe Concept Drift:** Solved a user behavioral shift (skip rates dropping from 31% down to 4%) through micro-mood feature engineering, achieving **97% accuracy** (ROC-AUC: 0.824).
+- **Technical Blueprint:** Read the complete mathematical derivations and engineering rationale in [`docs/eda/EDA_THEORY_AND_METHODS.md`](docs/eda/EDA_THEORY_AND_METHODS.md).
 
 ---
 
@@ -76,31 +65,29 @@ flowchart LR
 
 ## <a id="tech-stack"></a>Tech Stack
 
-| Layer | Tools & Frameworks |
-| :--- | :--- |
-| **Language & Core** | ![Python](https://img.shields.io/badge/Python_3.9+-3776AB?style=flat-square&logo=python&logoColor=white) ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F00?style=flat-square&logo=sqlalchemy&logoColor=white) |
-| **Data Engineering** | ![Pandas](https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white) ![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white) ![Psycopg2](https://img.shields.io/badge/Psycopg2-336791?style=flat-square&logo=postgresql&logoColor=white) |
-| **Databases** | ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white) ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white) |
-| **Machine Learning** | ![Scikit-Learn](https://img.shields.io/badge/scikit_learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white) ![XGBoost](https://img.shields.io/badge/XGBoost-111?style=flat-square&logo=xgboost&logoColor=white) ![Joblib](https://img.shields.io/badge/Joblib-007ACC?style=flat-square) |
-| **Data Visualization** | ![Plotly](https://img.shields.io/badge/Plotly-3F4F75?style=flat-square&logo=plotly&logoColor=white) ![Seaborn](https://img.shields.io/badge/Seaborn-388E3C?style=flat-square) ![Matplotlib](https://img.shields.io/badge/Matplotlib-11557C?style=flat-square) ![Kaleido](https://img.shields.io/badge/Kaleido-7B1FA2?style=flat-square) |
+- **Language:** Python 3.9+
+- **Data Engineering & Analysis:** Pandas, NumPy, SQLAlchemy, Psycopg2
+- **Databases:** SQLite, PostgreSQL
+- **Machine Learning:** Scikit-Learn, XGBoost, Joblib
+- **Data Visualization:** Plotly, Seaborn, Matplotlib
 
 ---
 
 ## <a id="core-pipeline-modules"></a>Core Pipeline Modules
 
-### 1. [`pipeline/01_data_cleaning.py`](pipeline/01_data_cleaning.py) ![ETL Engine](https://img.shields.io/badge/Module-ETL_%26_Ingestion-00bcd4?style=flat-square)
+### 1. [`pipeline/01_data_cleaning.py`](pipeline/01_data_cleaning.py) (ETL & Ingestion Engine)
 - Accepts raw Spotify JSON streams, SQLite databases, or PostgreSQL connections.
 - Normalizes timestamps (UTC to Asia/Kolkata), decodes IP origins, drops high-sparsity metadata, and handles categorical encodings.
 - Exports cleaned data directly into SQLite or PostgreSQL tables with native COPY streams and minimal RAM overhead.
 
-### 2. [`pipeline/02_eda_visualizations.py`](pipeline/02_eda_visualizations.py) ![EDA Engine](https://img.shields.io/badge/Module-Automated_EDA_%26_Visuals-ec4899?style=flat-square)
+### 2. [`pipeline/02_eda_visualizations.py`](pipeline/02_eda_visualizations.py) (Automated EDA & Visualization Engine)
 - Form-agnostic loader that reads directly from **SQLite or PostgreSQL** with seamless default fallback on `Enter`.
 - Asks the user once for `top_n` items (artists, songs, genres, albums) and dynamically shapes all ranking charts.
 - Autonomously executes comprehensive Exploratory Data Analysis, generating 21 Japanese Winter Night figures (`reports/images/`) and interactive Plotly HTML Sankey navigation funnels.
 - Compiles tabular metrics and visual charts cleanly into `reports/EDA_Report.md` (no terminal clutter).
 - Features Phase 3 Feature Store engineering and interactive SQL export in the terminal.
 
-### 3. [`pipeline/03_ml_modeling.py`](pipeline/03_ml_modeling.py) ![ML Engine](https://img.shields.io/badge/Module-Predictive_Modeling-2ea44f?style=flat-square)
+### 3. [`pipeline/03_ml_modeling.py`](pipeline/03_ml_modeling.py) (Predictive Modeling Engine)
 - Ingests engineered features from **SQLite or PostgreSQL** (with automatic on-the-fly calculation fallback).
 - Combats concept drift with modern chronological train/test splitting (2023+).
 - Trains and evaluates Cost-Sensitive XGBoost and Balanced Random Forest classifiers with optimal threshold tuning.
@@ -110,7 +97,7 @@ flowchart LR
 
 ## <a id="ml-engineering-journey"></a>The ML Engineering Journey
 
-During model development in the research phase, four critical machine learning challenges were identified and systematically resolved:
+During model development in the research phase, three critical machine learning challenges were identified and systematically resolved:
 
 ```
 [Attempts 1–3] ────► [Attempt 4] ──────────► [Attempt 5] ──────────► [Attempt 6: Baseline]
@@ -119,13 +106,6 @@ Leakage from         Random 80/20 Split      Chronological Split     Micro-Mood 
 (Identified &        (Lookahead Bias &       to Concept Drift        Defeated drift & eliminated
  Dropped)             Leakage uncovered)      (Skip rate 31% -> 4%)   all data leakage
 ```
-
-| Experiment Phase | Validation Strategy | Outcome / Metric | Key Engineering Takeaway |
-| :--- | :--- | :--- | :--- |
-| **Attempts 1–3** | Random 80/20 Split | ![Target Leakage](https://img.shields.io/badge/Status-Target_Leakage-e11d48?style=flat-square) | `sec_played` and `skipped` leaked future state; purged to enforce pre-stream prediction |
-| **Attempt 4** | Random 80/20 Split | ![Lookahead Bias](https://img.shields.io/badge/Status-Lookahead_Bias-f59e0b?style=flat-square) | Random split mixed past/future streams of identical songs, artificially inflating AUC to 0.95 |
-| **Attempt 5** | Chronological (2019–2024 / 2025+) | ![Concept Drift](https://img.shields.io/badge/Status-Concept_Drift-8b5cf6?style=flat-square) | Revealed massive concept drift: user skip rate plummeted from 31% (2021) to 4% (2025) |
-| **Attempt 6** | Chronological Windowed (2023+) | ![Working Baseline](https://img.shields.io/badge/Status-97.0%25_Acc_|_0.824_AUC-22c55e?style=flat-square) | Windowing and short-term micro-moods eliminated drift, establishing a robust baseline |
 
 1. **Eliminating Lookahead Bias:** A standard random train/test split allowed future listening patterns to leak into the past. Moving to a strict **Chronological Forward Split** restored real-world evaluation integrity.
 2. **Defeating Concept Drift:** Listener habits changed drastically over the multi-year history. Restricting the training window to recent years and engineering short-term **Micro-Mood** variables anchored ~60% of predictive power to immediate psychological context rather than stale historical preferences.
@@ -209,11 +189,11 @@ python pipeline/03_ml_modeling.py
 
 Explore and run the step-by-step Jupyter notebooks directly in your browser:
 
-| Notebook | Domain | Output Status | Interactive Cloud Runner |
-| :--- | :--- | :--- | :--- |
-| [`01_data_cleaning.ipynb`](notebooks/01_data_cleaning.ipynb) | Initial ETL, schema design, and column pruning | ![Clean PII](https://img.shields.io/badge/PII-Scrubbed-2ea44f?style=flat-square) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/NotCatfish/Spotify-Analytics-Pipeline/blob/main/notebooks/01_data_cleaning.ipynb) |
-| [`02_eda_visualizations.ipynb`](notebooks/02_eda_visualizations.ipynb) | Interactive visualization drafting and distribution plots | ![Clean PII](https://img.shields.io/badge/PII-Scrubbed-2ea44f?style=flat-square) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/NotCatfish/Spotify-Analytics-Pipeline/blob/main/notebooks/02_eda_visualizations.ipynb) |
-| [`03_ml_modeling.ipynb`](notebooks/03_ml_modeling.ipynb) | Model benchmarking, chronological validation, concept drift | ![Clean PII](https://img.shields.io/badge/PII-Scrubbed-2ea44f?style=flat-square) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/NotCatfish/Spotify-Analytics-Pipeline/blob/main/notebooks/03_ml_modeling.ipynb) |
+| Notebook | Description | Interactive Cloud Runner |
+| :--- | :--- | :--- |
+| [`01_data_cleaning.ipynb`](notebooks/01_data_cleaning.ipynb) | Initial ETL, schema design, and column pruning experiments. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/NotCatfish/Spotify-Analytics-Pipeline/blob/main/notebooks/01_data_cleaning.ipynb) |
+| [`02_eda_visualizations.ipynb`](notebooks/02_eda_visualizations.ipynb) | Interactive visualization drafting and distribution plots. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/NotCatfish/Spotify-Analytics-Pipeline/blob/main/notebooks/02_eda_visualizations.ipynb) |
+| [`03_ml_modeling.ipynb`](notebooks/03_ml_modeling.ipynb) | Model benchmarking, chronological validation, and concept drift experiments. | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/NotCatfish/Spotify-Analytics-Pipeline/blob/main/notebooks/03_ml_modeling.ipynb) |
 
 *Note: All cell outputs have been scrubbed to protect Personally Identifiable Information (PII).*
 
