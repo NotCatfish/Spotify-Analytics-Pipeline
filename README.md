@@ -4,7 +4,7 @@ An end-to-end Python data engineering, automated exploratory data analysis (EDA)
 
 ---
 
-## $\color{#F59E0B}{\text{Key Highlights \& Engineering Wins}}$
+## $\color{#F59E0B}{\text{Key Highlights and Engineering Wins}}$
 
 - **$\color{#38BDF8}\text{85\% Memory Optimization:}$** Compressed in-memory dataset footprint from **$\color{#38BDF8}\text{277 MB down to 42.5 MB}$** using targeted `int8`/`category` downcasting.
 - **$\color{#38BDF8}\text{>300x Linear Algebra Acceleration:}$** Replaced expensive multi-genre `.groupby()` loops with compiled BLAS dot products (`.T.dot()`), computing play counts and duration across 340+ genres in **$\color{#38BDF8}\text{under 0.05s}$**.
@@ -33,7 +33,7 @@ An end-to-end Python data engineering, automated exploratory data analysis (EDA)
 
 ## <a id="system-architecture"></a>$\color{#F59E0B}{\text{System Architecture}}$
 
-### **$\color{#38BDF8}\text{1. Research \& Prototyping Workflow}$** (`notebooks/`)
+### **$\color{#38BDF8}\text{1. Research and Prototyping Workflow}$** (`notebooks/`)
 The research workflow relies on structured database connections for rapid exploratory querying, visual validation, and model experimentation:
 
 ```mermaid
@@ -66,7 +66,7 @@ flowchart LR
 ## <a id="tech-stack"></a>$\color{#F59E0B}{\text{Tech Stack}}$
 
 - **$\color{#38BDF8}\text{Language:}$** `Python 3.9+`
-- **$\color{#38BDF8}\text{Data Engineering \& Analysis:}$** `Pandas`, `NumPy`, `SQLAlchemy`, `Psycopg2`
+- **$\color{#38BDF8}\text{Data Engineering and Analysis:}$** `Pandas`, `NumPy`, `SQLAlchemy`, `Psycopg2`
 - **$\color{#38BDF8}\text{Databases:}$** `SQLite`, `PostgreSQL`
 - **$\color{#38BDF8}\text{Machine Learning:}$** `Scikit-Learn`, `XGBoost`, `Joblib`
 - **$\color{#38BDF8}\text{Data Visualization:}$** `Plotly`, `Seaborn`, `Matplotlib`
@@ -75,12 +75,12 @@ flowchart LR
 
 ## <a id="core-pipeline-modules"></a>$\color{#F59E0B}{\text{Core Pipeline Modules}}$
 
-### **$\color{#38BDF8}\text{1.}$** [`pipeline/01_data_cleaning.py`](pipeline/01_data_cleaning.py) **$\color{#38BDF8}\text{(ETL \& Ingestion Engine)}$**
+### **$\color{#38BDF8}\text{1.}$** [`pipeline/01_data_cleaning.py`](pipeline/01_data_cleaning.py) **$\color{#38BDF8}\text{(ETL and Ingestion Engine)}$**
 - Accepts raw Spotify JSON streams, SQLite databases, or PostgreSQL connections.
 - Normalizes timestamps (UTC to Asia/Kolkata), decodes IP origins, drops high-sparsity metadata, and handles categorical encodings.
 - Exports cleaned data directly into SQLite or PostgreSQL tables with native COPY streams and minimal RAM overhead.
 
-### **$\color{#38BDF8}\text{2.}$** [`pipeline/02_eda_visualizations.py`](pipeline/02_eda_visualizations.py) **$\color{#38BDF8}\text{(Automated EDA \& Visualization Engine)}$**
+### **$\color{#38BDF8}\text{2.}$** [`pipeline/02_eda_visualizations.py`](pipeline/02_eda_visualizations.py) **$\color{#38BDF8}\text{(Automated EDA and Visualization Engine)}$**
 - Form-agnostic loader that reads directly from **SQLite or PostgreSQL** with seamless default fallback on `Enter`.
 - Asks the user once for `top_n` items (artists, songs, genres, albums) and dynamically shapes all ranking charts.
 - Autonomously executes comprehensive Exploratory Data Analysis, generating 21 Japanese Winter Night figures (`reports/images/`) and interactive Plotly HTML Sankey navigation funnels.
@@ -148,13 +148,13 @@ If you are an AI assistant (Cursor, Windsurf, Copilot, or terminal agent) execut
 
 ---
 
-## <a id="getting-started-usage"></a>$\color{#F59E0B}{\text{Getting Started \& Usage}}$
+## <a id="getting-started-usage"></a>$\color{#F59E0B}{\text{Getting Started and Usage}}$
 
 ### Prerequisites
 - Python 3.9+
 - Git
 
-### **$\color{#38BDF8}\text{1. Clone \& Install}$**
+### **$\color{#38BDF8}\text{1. Clone and Install}$**
 ```bash
 git clone https://github.com/NotCatfish/Spotify-Analytics-Pipeline.git
 cd Spotify-Analytics-Pipeline
@@ -171,7 +171,7 @@ python pipeline/01_data_cleaning.py
 ```
 *(Prompts for your input source [json/sqlite/postgres] and target output [sqlite/postgres].)*
 
-**$\color{#38BDF8}\text{Step 2: Generate Automated EDA Visualizations \& Markdown Report}$**
+**$\color{#38BDF8}\text{Step 2: Generate Automated EDA Visualizations and Markdown Report}$**
 ```bash
 python pipeline/02_eda_visualizations.py
 ```
@@ -199,7 +199,7 @@ Explore and run the step-by-step Jupyter notebooks directly in your browser:
 
 ---
 
-## <a id="author-connect"></a>$\color{#F59E0B}{\text{Author \& Connect}}$
+## <a id="author-connect"></a>$\color{#F59E0B}{\text{Author and Connect}}$
 
 **Indraneel Samanta**  
 *Aspiring Data & AI Engineer | B.Tech in AIML @ DJSCE*
