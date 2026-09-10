@@ -291,6 +291,17 @@ def ingest_cleaned_data():
         if master_df["time_stamp"].dt.tz is None:
             master_df["time_stamp"] = master_df["time_stamp"].dt.tz_localize("UTC")
         master_df["time_stamp"] = master_df["time_stamp"].dt.tz_convert("Asia/Kolkata")
+        cols_to_drop = [
+            "ip_addr",
+            "episode_name",
+            "episode_show_name",
+            "spotify_episode_uri",
+            "audiobook_title",
+            "audiobook_uri",
+            "audiobook_chapter_uri",
+            "audiobook_chapter_title"
+        ]
+        master_df = master_df.drop(columns=[c for c in cols_to_drop if c in master_df.columns])
     return master_df
 
 
@@ -1370,23 +1381,28 @@ def run_feature_engineering_and_export(master_df):
     # 2. Ground-Truth Skip Target
     master_df["is_skip"] = (master_df["reason_end"] == "fwdbtn").astype(int)
 
-    # 3. Temporal Signals
+    # 3. Temporal Signals & Circadian Encodings
     master_df["hour_of_day"] = master_df["time_stamp"].dt.hour.astype("int8")
     master_df["day_of_week"] = master_df["time_stamp"].dt.dayofweek.astype("int8")
     master_df["day_of_month"] = master_df["time_stamp"].dt.day.astype("int8")
     master_df["year"] = master_df["time_stamp"].dt.year.astype("int16")
+    master_df["hour_sin"] = np.sin(2 * np.pi * master_df["hour_of_day"] / 24.0).astype("float32")
+    master_df["hour_cos"] = np.cos(2 * np.pi * master_df["hour_of_day"] / 24.0).astype("float32")
 
-    # 4. Dynamic Target Encoding with Laplace Smoothing (Zero Leakage)
+    # 4. Dynamic Target Encoding with Laplace Smoothing (Strict Zero-Leakage)
     global_skip_rate = master_df["is_skip"].mean()
     smoothing_weight = 20
 
+    # A. Artist Affinity & Cold-Start Indicator
     master_df["artist_past_plays"] = master_df.groupby("artist_name").cumcount()
     master_df["artist_past_skips"] = master_df.groupby("artist_name")["is_skip"].cumsum() - master_df["is_skip"]
     master_df["artist_smoothed_skip_rate"] = (
         (master_df["artist_past_skips"] + (smoothing_weight * global_skip_rate)) /
         (master_df["artist_past_plays"] + smoothing_weight)
     ).astype("float32")
+    master_df["is_cold_start_artist"] = (master_df["artist_past_plays"] < 3).astype("int8")
 
+    # B. Song Affinity
     master_df["song_past_plays"] = master_df.groupby("song_name").cumcount()
     master_df["song_past_skips"] = master_df.groupby("song_name")["is_skip"].cumsum() - master_df["is_skip"]
     master_df["song_smoothed_skip_rate"] = (
@@ -1394,11 +1410,56 @@ def run_feature_engineering_and_export(master_df):
         (master_df["song_past_plays"] + smoothing_weight)
     ).astype("float32")
 
-    master_df = master_df.drop(columns=["artist_past_plays", "artist_past_skips", "song_past_plays", "song_past_skips"])
+    # C. Primary Genre Affinity (from Last.fm Tags)
+    if "genres" in master_df.columns:
+        master_df["primary_genre"] = master_df["genres"].apply(
+            lambda x: x.split(",")[0].strip().lower() if isinstance(x, str) and x.strip() else "unknown"
+        )
+    else:
+        master_df["primary_genre"] = "unknown"
 
-    # 5. Micro-Mood & Session Dynamics
+    master_df["genre_past_plays"] = master_df.groupby("primary_genre").cumcount()
+    master_df["genre_past_skips"] = master_df.groupby("primary_genre")["is_skip"].cumsum() - master_df["is_skip"]
+    master_df["genre_smoothed_skip_rate"] = (
+        (master_df["genre_past_skips"] + (smoothing_weight * global_skip_rate)) /
+        (master_df["genre_past_plays"] + smoothing_weight)
+    ).astype("float32")
+
+    # D. Album Affinity
+    master_df["album_name_clean"] = master_df["album_name"].fillna("unknown").astype(str)
+    master_df["album_past_plays"] = master_df.groupby("album_name_clean").cumcount()
+    master_df["album_past_skips"] = master_df.groupby("album_name_clean")["is_skip"].cumsum() - master_df["is_skip"]
+    master_df["album_smoothed_skip_rate"] = (
+        (master_df["album_past_skips"] + (smoothing_weight * global_skip_rate)) /
+        (master_df["album_past_plays"] + smoothing_weight)
+    ).astype("float32")
+
+    # E. Playback Trigger Origin (reason_start)
+    master_df["reason_start_clean"] = master_df["reason_start"].fillna("unknown").astype(str)
+    master_df["reason_past_plays"] = master_df.groupby("reason_start_clean").cumcount()
+    master_df["reason_past_skips"] = master_df.groupby("reason_start_clean")["is_skip"].cumsum() - master_df["is_skip"]
+    master_df["reason_start_smoothed_skip_rate"] = (
+        (master_df["reason_past_skips"] + (smoothing_weight * global_skip_rate)) /
+        (master_df["reason_past_plays"] + smoothing_weight)
+    ).astype("float32")
+
+    # Cleanup intermediate calculation columns
+    master_df = master_df.drop(columns=[
+        "artist_past_plays", "artist_past_skips",
+        "song_past_plays", "song_past_skips",
+        "primary_genre", "genre_past_plays", "genre_past_skips",
+        "album_name_clean", "album_past_plays", "album_past_skips",
+        "reason_start_clean", "reason_past_plays", "reason_past_skips"
+    ])
+
+    # 5. Micro-Mood & Real-Time Sequential Momentum
     master_df["previous_song_skipped"] = master_df["is_skip"].shift(1).fillna(0).astype("int8")
 
+    # A. Consecutive Listens Streak (Listening Inertia / The 'Zone' Indicator)
+    streak_group = (master_df["is_skip"].shift(1).fillna(0) == 1).cumsum()
+    master_df["consecutive_listens_streak"] = master_df.groupby(streak_group).cumcount().astype("int16")
+
+    # B. Backward Merge for Distance to Last Skip (Zero Lookahead)
     skips_only = master_df[master_df["is_skip"] == 1][["time_stamp"]]
     master_df["last_skip_time"] = pd.merge_asof(
         master_df[["time_stamp"]],
@@ -1413,10 +1474,30 @@ def run_feature_engineering_and_export(master_df):
     ).astype("float32")
     master_df = master_df.drop(columns=["last_skip_time"])
 
-    # 15-Minute Rolling Skip Velocity
+    # C. Multi-Scale Rolling Skip Velocities (3-Minute & 15-Minute Windows)
     master_df = master_df.set_index("time_stamp").sort_index()
+    master_df["skips_last_3m"] = (master_df["is_skip"].rolling("3min").sum() - master_df["is_skip"]).astype("float32")
     master_df["skips_last_15m"] = (master_df["is_skip"].rolling("15min").sum() - master_df["is_skip"]).astype("float32")
     master_df = master_df.reset_index()
+
+    # 6. Environmental & Hardware Context
+    if "platform" in master_df.columns:
+        master_df["platform_android"] = (master_df["platform"].astype(str).str.lower() == "android").astype("int8")
+        master_df["platform_windows"] = (master_df["platform"].astype(str).str.lower() == "windows").astype("int8")
+        master_df["platform_linux"] = (master_df["platform"].astype(str).str.lower() == "linux").astype("int8")
+    else:
+        master_df["platform_android"] = 0
+        master_df["platform_windows"] = 0
+        master_df["platform_linux"] = 0
+
+    if "shuffle" in master_df.columns:
+        master_df["shuffle_mode"] = master_df["shuffle"].fillna(0).astype(int).astype("int8")
+    else:
+        master_df["shuffle_mode"] = 0
+
+    # Session boundary: Gap > 20 minutes indicates start of a fresh listening session
+    time_diff_sec = (master_df["time_stamp"] - master_df["time_stamp"].shift(1)).dt.total_seconds().fillna(99999)
+    master_df["is_session_start"] = (time_diff_sec > 1200).astype("int8")
 
     print("Feature engineering complete!")
     print(f"Engineered Dataset Shape: {master_df.shape} ({len(master_df):,} rows, {len(master_df.columns)} columns)")
@@ -1425,6 +1506,11 @@ def run_feature_engineering_and_export(master_df):
     # Clean Genres for SQL export
     if "genres" in master_df.columns:
         master_df["genres"] = master_df["genres"].apply(lambda x: ", ".join(x) if isinstance(x, list) else str(x))
+
+    # Drop high-dimensional one-hot genre columns (replaced by continuous genre_smoothed_skip_rate)
+    dummy_genre_cols = [c for c in master_df.columns if c.startswith("genre_") and c != "genre_smoothed_skip_rate"]
+    if dummy_genre_cols:
+        master_df = master_df.drop(columns=dummy_genre_cols)
 
     # EXPORT PROMPT SETUP
     default_base_name = "Engineered_Spotify_Portable"
@@ -1473,7 +1559,9 @@ def run_feature_engineering_and_export(master_df):
             local_conn = sqlite3.connect(sqlite_path)
             local_conn.execute("PRAGMA synchronous = OFF")
             local_conn.execute("PRAGMA journal_mode = MEMORY")
+            local_conn.execute("DROP TABLE IF EXISTS engineered_streaming_history")
             master_df.to_sql(table_name, local_conn, if_exists="replace", index=False, chunksize=10000)
+            local_conn.execute("VACUUM")
             local_conn.close()
             print(f"Portable SQLite Feature Store Built Successfully at: {sqlite_path} [table: {table_name}]")
         except Exception as e:

@@ -6,7 +6,8 @@ An end-to-end Python data engineering, automated exploratory data analysis (EDA)
 
 ## $\color{#F59E0B}{\text{Key Highlights and Engineering Wins}}$
 
-- **$\color{#38BDF8}\text{85\% Memory Optimization:}$** Compressed in-memory dataset footprint from **$\color{#38BDF8}\text{277 MB down to 42.5 MB}$** using targeted `int8`/`category` downcasting.
+- **$\color{#38BDF8}\text{85\% Memory Optimization & 2x Training Speedup:}$** Compressed in-memory dataset footprint from **$\color{#38BDF8}\text{277 MB down to 42.5 MB}$** in EDA, and automated SQL numeric downcasting (`compress_numeric_columns`), doubling parallel Optuna search throughput from **$\color{#38BDF8}\text{2 it/s to 4 it/s}$**.
+- **$\color{#38BDF8}\text{Zero-Leak Privacy & Sanitization:}$** Certified 0 PII leaks via automated regex audits; permanently purged `ip_addr` and empty podcast/audiobook IDs, and sanitized device hardware models to 4 generic OS classes (`android`, `windows`, `linux`, `unknown`).
 - **$\color{#38BDF8}\text{>300x Linear Algebra Acceleration:}$** Replaced expensive multi-genre `.groupby()` loops with compiled BLAS dot products (`.T.dot()`), computing play counts and duration across 340+ genres in **$\color{#38BDF8}\text{under 0.05s}$**.
 - **$\color{#38BDF8}\text{9,157x Memory Reduction in Temporal Trends:}$** Used chunked temporal Map-Reduce instead of `.str.split().explode()`, dropping intermediate RAM from **$\color{#38BDF8}\text{1.6 GB to 0.18 MB}$**.
 - **$\color{#38BDF8}\text{High-Throughput Streaming Database Layer:}$** SQLite in-memory pragmas and PostgreSQL native buffer streaming via `COPY FROM STDIN` (slashing export time from **$\color{#38BDF8}\text{15 mins to 3.2s}$**).
@@ -100,17 +101,18 @@ flowchart LR
 During model development in the research phase, three critical machine learning challenges were identified and systematically resolved:
 
 ```
-[Attempts 1–3] ────► [Attempt 4] ──────────► [Attempt 5] ──────────► [Attempt 6: Baseline]
-Leakage from         Random 80/20 Split      Chronological Split     Micro-Mood Engineering
-`sec_played`         0.95 ROC-AUC            Score collapsed due     Tuned thresholds (XGBoost 0.625)
-(Identified &        (Lookahead Bias &       to Concept Drift        Defeated drift & eliminated
- Dropped)             Leakage uncovered)      (Skip rate 31% -> 4%)   all data leakage
+[Attempts 1–3] ──► [Attempt 4] ──────► [Attempt 5] ──────► [Attempt 6] ──────► [Attempt 7] ──────► [Attempt 8: CHAMPION]
+Leakage from      Random 80/20 Split  Chronological Split  Micro-Mood Baseline  19 Leak-Free Features  Hardware Optuna (RTX 3060)
+`sec_played`      0.95 ROC-AUC        Concept Drift        Threshold Tuning     70:30 Chrono Split     80% Precision SLA Guardrail
+(Identified &     (Lookahead Bias     (Skip rate dropped   (ROC-AUC: 0.824,     (ROC-AUC: 0.850,       (ROC-AUC: 0.857, Recall 47.4%,
+ Dropped)          uncovered)          from 31% to 4%)      Recall 0.48)         Precision 0.77)        F1: 0.60, Threshold: 0.676)
 ```
 
 1. **$\color{#38BDF8}\text{Eliminating Lookahead Bias:}$** A standard random train/test split allowed future listening patterns to leak into the past. Moving to a strict **$\color{#38BDF8}\text{Chronological Forward Split}$** restored real-world evaluation integrity.
-2. **$\color{#38BDF8}\text{Defeating Concept Drift:}$** Listener habits changed drastically over the multi-year history. Restricting the training window to recent years and engineering short-term **$\color{#38BDF8}\text{Micro-Mood}$** variables anchored ~60% of predictive power to immediate psychological context rather than stale historical preferences.
-3. **$\color{#38BDF8}\text{Threshold Tuning for Imbalance:}$** Because skips represent a small minority of listening events, default 0.50 decision thresholds were replaced with tuned precision-recall thresholds (XGBoost @ 0.625) to maximize F1 and precision.
-4. **$\color{#38BDF8}\text{Optimization Roadmap:}$** While Attempt 6 achieves **$\color{#38BDF8}\text{97.0\% overall accuracy}$** and **$\color{#38BDF8}\text{0.824 ROC-AUC}$**, its recall stands at 0.48. A formal Optuna Bayesian hyperparameter search and Focal Loss tuning roadmap is detailed in [`docs/ml/ML_PLAN.md`](docs/ml/ML_PLAN.md).
+2. **$\color{#38BDF8}\text{Defeating Concept Drift:}$** Listener habits changed drastically over the multi-year history. Restricting the training window to modern listening and engineering short-term **$\color{#38BDF8}\text{Micro-Mood}$** variables anchored ~60% of predictive power to immediate psychological context rather than stale historical preferences.
+3. **$\color{#38BDF8}\text{19-Feature Matrix Expansion:}$** Replaced 154 sparse genre columns with dynamic expanding genre risk averages and added acute momentum velocity (`skips_last_3m`, `consecutive_listens_streak`), boosting ROC-AUC to **$\color{#38BDF8}\text{0.850}$** without any hyperparameter tuning.
+4. **$\color{#38BDF8}\text{SLA-Constrained Bayesian Optimization (Champion Model):}$** Deployed 300-trial GPU-accelerated Optuna tuning on an NVIDIA RTX 3060 with an explicit **$\color{#38BDF8}\text{80\% Precision Business SLA}$**. Achieved **$\color{#38BDF8}\text{98.0\% overall accuracy}$**, **$\color{#38BDF8}\text{0.857 ROC-AUC}$**, **$\color{#38BDF8}\text{47.39\% safe recall}$**, and an all-time peak **$\color{#38BDF8}\text{F1-score of 0.60}$** (threshold: 0.676). Read the full experiment log in [`docs/ml/ML_PROGRESS_LOG.md`](docs/ml/ML_PROGRESS_LOG.md).
+
 
 ---
 

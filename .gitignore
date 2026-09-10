@@ -29,6 +29,10 @@ models/
 # SQL Directory
 sql/
 
+# API & Microservices
+fastapi/
+fastapi_bootcamp/
+
 # Agents & Tooling Directories
 .agents/
 agents/

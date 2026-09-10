@@ -106,6 +106,44 @@ def clean_base_dataframe(df):
 
     # Drop podcast episodes where song_name is null
     df = df.dropna(subset=["song_name", "artist_name"]).reset_index(drop=True)
+
+    # Drop non-music, podcast, audiobook, and privacy-sensitive IP columns
+    cols_to_drop = [
+        "ip_addr",
+        "episode_name",
+        "episode_show_name",
+        "spotify_episode_uri",
+        "audiobook_title",
+        "audiobook_uri",
+        "audiobook_chapter_uri",
+        "audiobook_chapter_title"
+    ]
+    df = df.drop(columns=[c for c in cols_to_drop if c in df.columns])
+
+    # Standardize platform names to clean categories (android, windows, linux, ios, etc.)
+    def standardize_platform(val):
+        if not isinstance(val, str) or not val.strip():
+            return "unknown"
+        v = val.lower()
+        if "android" in v:
+            return "android"
+        elif "window" in v:
+            return "windows"
+        elif "ios" in v or "iphone" in v or "ipad" in v:
+            return "ios"
+        elif "mac" in v or "darwin" in v or "osx" in v:
+            return "macos"
+        elif "linux" in v:
+            return "linux"
+        elif "web" in v:
+            return "web"
+        elif "unknown" in v:
+            return "unknown"
+        return "other"
+
+    if "platform" in df.columns:
+        df["platform"] = df["platform"].apply(standardize_platform)
+
     return df
 
 
@@ -239,6 +277,7 @@ def interactive_export(df):
             local_conn.execute("PRAGMA synchronous = OFF")
             local_conn.execute("PRAGMA journal_mode = MEMORY")
             df.to_sql(table_name, local_conn, if_exists="replace", index=False, chunksize=10000)
+            local_conn.execute("VACUUM")
             local_conn.close()
             print(f"Portable SQLite Backup Rebuilt Successfully at: {sqlite_path}")
         except Exception as e:

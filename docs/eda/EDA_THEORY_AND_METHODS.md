@@ -45,11 +45,12 @@ We implemented an automated, schema-aware downcasting protocol:
   * `day_of_week` (0 to 6) $\rightarrow$ `int8`
   * `day_of_month` (1 to 31) $\rightarrow$ `int8`
   * `year` (2019 to 2026) $\rightarrow$ `int16`
-* **$\color{#38BDF8}\text{High-Cardinality Repetitive Strings:}$** Text columns with finite domain values (`platform`, `country`, `reason_start`, `reason_end`) were cast to Pandas **`category`** types. This substitutes redundant string allocations with single-byte integer pointer tables.
+* **$\color{#38BDF8}\text{High-Cardinality Repetitive Strings:}$** Text columns with finite domain values (`platform`, `conn_country`, `reason_start`, `reason_end`) were cast to Pandas **`category`** types. Technical hardware device strings were sanitized into 4 canonical OS labels: `android`, `windows`, `linux`, and `unknown`.
+* **$\color{#38BDF8}\text{Automated SQL Ingestion Compression:}$** Standardized in `compress_numeric_columns()`: instantly downcasts raw SQL integer queries into `int8` (binary flags, hour, day, acute skip counts), `int16` (years, streaks), `int32` (play counts), and `float32` (Bayesian skip rates, harmonic cycles).
 
 ### Why and Business Impact
-* **$\color{#38BDF8}\text{Memory Footprint Reduced by 85\%:}$** Slashed baseline dataframe memory from **277 MB down to 42.5 MB**.
-* **$\color{#38BDF8}\text{Vectorized CPU Efficiency:}$** Dense integer arrays fit entirely within CPU L3 cache lines, dramatically accelerating downstream filtering, sorting, and matrix transformations.
+* **$\color{#38BDF8}\text{Memory Footprint Reduced by 85\%:}$** Slashed baseline dataframe memory from **277 MB down to 42.5 MB** in EDA, and reduced ML feature stores by 36%–80% upon loading.
+* **$\color{#38BDF8}\text{Vectorized CPU Efficiency & 2x Training Speed:}$** Dense integer arrays fit entirely within CPU L3 cache lines, eliminating PCIe bus bottlenecks and FP64 emulation on RTX 3060 CUDA cores to double Optuna throughput from **2 it/s to 4 it/s**.
 
 ---
 

@@ -61,6 +61,41 @@ DEFAULT_BASE_NAME = "Engineered_Spotify_Portable"
 DEFAULT_PG_URI = os.getenv("POSTGRES_URI", "postgresql://postgres:password@localhost:5432/postgres")
 
 
+def compress_numeric_columns(df):
+    """Compresses all numeric columns to their lowest memory representation."""
+    if df is None:
+        return None
+    initial_mem = df.memory_usage().sum() / (1024 * 1024)
+    num_cols = df.select_dtypes(include=["number"]).columns
+    for col in num_cols:
+        c_min = df[col].min()
+        c_max = df[col].max()
+        if pd.api.types.is_integer_dtype(df[col]):
+            if c_min >= -128 and c_max <= 127:
+                df[col] = df[col].astype("int8")
+            elif c_min >= -32768 and c_max <= 32767:
+                df[col] = df[col].astype("int16")
+            elif c_min >= -2147483648 and c_max <= 2147483647:
+                df[col] = df[col].astype("int32")
+            else:
+                df[col] = df[col].astype("int64")
+        elif pd.api.types.is_float_dtype(df[col]):
+            if not df[col].isna().any() and np.array_equal(df[col], df[col].astype("int64")):
+                if c_min >= -128 and c_max <= 127:
+                    df[col] = df[col].astype("int8")
+                elif c_min >= -32768 and c_max <= 32767:
+                    df[col] = df[col].astype("int16")
+                elif c_min >= -2147483648 and c_max <= 2147483647:
+                    df[col] = df[col].astype("int32")
+                else:
+                    df[col] = df[col].astype("int64")
+            else:
+                df[col] = df[col].astype("float32")
+    final_mem = df.memory_usage().sum() / (1024 * 1024)
+    print(f"Memory compressed: {initial_mem:.2f} MB -> {final_mem:.2f} MB ({((initial_mem - final_mem) / initial_mem) * 100:.1f}% reduction)")
+    return df
+
+
 def ingest_feature_data():
     """Interactive ingestion of engineered feature store from SQLite or PostgreSQL."""
     print("\n--- DATA INGESTION SETUP ---")
@@ -146,6 +181,7 @@ def ingest_feature_data():
 
                 feature_df = pd.read_sql_query(f'SELECT * FROM "{target_tbl}"', conn)
                 conn.close()
+                feature_df = compress_numeric_columns(feature_df)
                 print(f"Loaded {len(feature_df):,} rows successfully from SQLite (table: '{target_tbl}')!")
                 break
             except (KeyboardInterrupt, EOFError):
@@ -185,6 +221,7 @@ def ingest_feature_data():
 
                 feature_df = pd.read_sql_table(actual_table, engine)
                 engine.dispose()
+                feature_df = compress_numeric_columns(feature_df)
                 print(f"Loaded {len(feature_df):,} rows successfully from PostgreSQL (table: '{actual_table}')!")
                 break
             except (KeyboardInterrupt, EOFError):
@@ -243,7 +280,20 @@ def ingest_feature_data():
             feature_df = feature_df.set_index("time_stamp").sort_index()
             feature_df["skips_last_15m"] = (feature_df["is_skip"].rolling("15min").sum() - feature_df["is_skip"]).astype("float32")
             feature_df = feature_df.reset_index()
+            feature_df = compress_numeric_columns(feature_df)
             print("On-the-fly feature engineering completed successfully!")
+
+        cols_to_drop = [
+            "ip_addr",
+            "episode_name",
+            "episode_show_name",
+            "spotify_episode_uri",
+            "audiobook_title",
+            "audiobook_uri",
+            "audiobook_chapter_uri",
+            "audiobook_chapter_title"
+        ]
+        feature_df = feature_df.drop(columns=[c for c in cols_to_drop if c in feature_df.columns])
 
     return feature_df
 
