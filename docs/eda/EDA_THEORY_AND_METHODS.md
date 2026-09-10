@@ -49,8 +49,8 @@ We implemented an automated, schema-aware downcasting protocol:
 * **$\color{#38BDF8}\text{Automated SQL Ingestion Compression:}$** Standardized in `compress_numeric_columns()`: instantly downcasts raw SQL integer queries into `int8` (binary flags, hour, day, acute skip counts), `int16` (years, streaks), `int32` (play counts), and `float32` (Bayesian skip rates, harmonic cycles).
 
 ### Why and Business Impact
-* **$\color{#38BDF8}\text{Memory Footprint Reduced by 85\%:}$** Slashed baseline dataframe memory from **277 MB down to 42.5 MB** in EDA, and reduced ML feature stores by 36%–80% upon loading.
-* **$\color{#38BDF8}\text{Vectorized CPU Efficiency & 2x Training Speed:}$** Dense integer arrays fit entirely within CPU L3 cache lines, eliminating PCIe bus bottlenecks and FP64 emulation on RTX 3060 CUDA cores to double Optuna throughput from **2 it/s to 4 it/s**.
+* **$\color{#38BDF8}\text{Memory Footprint Reduced by 85 Percent:}$** Slashed baseline dataframe memory from **277 MB down to 42.5 MB** in EDA, and reduced ML feature stores by 36%–80% upon loading.
+* **$\color{#38BDF8}\text{Vectorized CPU Efficiency and 2x Training Speed:}$** Dense integer arrays fit entirely within CPU L3 cache lines, eliminating PCIe bus bottlenecks and FP64 emulation on RTX 3060 CUDA cores to double Optuna throughput from **2 it/s to 4 it/s**.
 
 ---
 
