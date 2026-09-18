@@ -1,10 +1,10 @@
 # Machine Learning Progress Log: Model Iterations and Metric Evolution
 
-This document is the empirical research log for the Spotify Skip Prediction Model. It tracks every experimental attempt (Attempts 1 through 6), documenting the features tested, the resulting metrics (Accuracy, Precision, Recall, ROC-AUC), and the exact technical and mathematical reasons why scores improved, collapsed, or stabilized.
+This document is the empirical research log for the Spotify Skip Prediction Model. It tracks every experimental attempt (Attempts 1 through 11), documenting the features tested, the resulting metrics (Accuracy, Precision, Recall, ROC-AUC), and the exact technical and mathematical reasons why scores improved, collapsed, or stabilized.
 
 ---
 
-## $\color{#F59E0B}{\text{Summary of Model Progression (Attempts 1 - 6)}}$
+## $\color{#F59E0B}{\text{Summary of Model Progression (Attempts 1 - 11)}}$
 
 | Attempt | Split Strategy | Feature Set | Primary Model | Accuracy | ROC-AUC | Recall | Precision | Core Diagnosis and Key Lesson Learned |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
@@ -14,6 +14,10 @@ This document is the empirical research log for the Spotify Skip Prediction Mode
 | **4** | Random 80/20 | Clean Behavioral + 154 OHE Genres | XGBoost / RF | ~93% | 0.948 | 0.89 | 0.59 | **Repeated Song Leakage ("Time Machine" Cheat):** Random splitting mixed future and past streams of the same songs, memorizing future user taste. |
 | **5** | Chronological (2019–2024 / 2025+) | Dynamic Target Encoding + `int8` compression | RF / XGBoost | — | 0.650 | 0.06 (RF)<br>0.42 (XGB) | 0.45 | **Discovery of Concept Drift:** Skip rate dropped from 31% in 2021 to 4% in 2025. Model trained on an impatient younger user failed on an older patient user. |
 | **7** | Chronological 70/30 (2023–2026) | 19 Features (Acute `skips_last_3m`, `consecutive_listens_streak`, Multi-Genre Blend, `reason_start`) | **XGBoost (Threshold 0.756, Untuned)** | **97.0%** | **0.850** | **0.45** | **0.77** | **Feature Engineering Ceiling:** Transitioned to 70/30 split and 19 features. Pushed ROC-AUC from 0.824 to 0.850 and Precision to 77% purely through behavioral feature engineering without any algorithmic hyperparameter tuning. |
+| **8** | Chronological | 19 Features | **XGBoost (Optuna Tuned)** | **98.0%** | **0.857** | **0.474** | **0.80** | **Business SLA Engine:** Enforced 80% precision guardrail; scaled `scale_pos_weight` and used feature dropout (`colsample_bytree`) to find complex secondary signals. |
+| **9** | Chronological | 19 Features | **XGBoost (Focal Loss)** | **—** | **0.860** | **0.461** | **0.80** | **Noisy Label Trap:** Custom Focal Loss forced the model to obsess over hard false-negatives which were mostly random noise, dropping overall recall. |
+| **10** | Chronological | 19 Features | **Ensemble (Stacking / Voting)** | **—** | **0.850** | **0.440** | **0.80** | **Dilution Effect:** Averaging highly-tuned XGBoost with untuned LightGBM/CatBoost dragged down the predictive power. |
+| **11** | Chronological | 19 Features (Leak-Free) | **XGBoost (Optuna Tuned)** | **98.0%** | **0.858** | **0.477** | **0.80** | **Final Champion:** Fixed a rolling mean data leakage in EDA. A perfectly clean, causal dataset allowed Optuna to hit the absolute mathematical ceiling. |
 
 ---
 
@@ -149,7 +153,7 @@ This document is the empirical research log for the Spotify Skip Prediction Mode
 
 ---
 
-### $\color{#38BDF8}\text{10th Attempt: Multi-Model Ensembling (Stacking & Soft Voting) (Failed)}$
+### $\color{#38BDF8}\text{10th Attempt: Multi-Model Ensembling (Stacking and Soft Voting) (Failed)}$
 * **Configuration:** 
   1. Trained the highly-tuned Champion XGBoost model alongside default, un-tuned LightGBM (Leaf-wise growth) and CatBoost (Ordered Boosting) models.
   2. First Attempt (Stacking Classifier): Used a Logistic Regression Meta-Model with `class_weight='balanced'`.
@@ -159,6 +163,22 @@ This document is the empirical research log for the Spotify Skip Prediction Mode
   * **Guaranteed Precision:** **80.0%**
   * **Maximized Safe Recall:** **44.0%** (Dropped from 47.4%)
 * **Diagnosis and Why it Failed:**
-  1. **$\color{#38BDF8}\text{Meta-Model Multicollinearity:}$** In the initial Stacking attempt, applying `class_weight='balanced'` to the base models AND the Meta-Model caused extreme probability distortion. The Logistic Regression CEO became confused by the heavily correlated probabilities and inverted the predictions (ROC-AUC plummeted to 0.404).
-  2. **$\color{#38BDF8}\text{The Dilution Effect (Soft Voting):}$** While Soft Voting fixed the inversion, it performed worse than XGBoost alone. Why? Because XGBoost was meticulously hyperparameter-tuned via Optuna for 300 trials, while LightGBM and CatBoost were running on default, un-tuned parameters. Averaging a highly-tuned "genius" model with two un-tuned "baseline" models diluted the overall accuracy. 
-  * **Conclusion:** The complexity of maintaining, tuning, and deploying a 3-model ensemble is not justified by the negative performance yield. Attempt 8 (Tuned XGBoost) is formally declared the final Production Champion.
+  1. **$\color{#38BDF8}{\text{Meta-Model Multicollinearity:}}$** In the initial Stacking attempt, applying `class_weight='balanced'` to the base models AND the Meta-Model caused extreme probability distortion. The Logistic Regression CEO became confused by the heavily correlated probabilities and inverted the predictions (ROC-AUC plummeted to 0.404).
+  2. **$\color{#38BDF8}{\text{The Dilution Effect (Soft Voting):}}$** While Soft Voting fixed the inversion, it performed worse than XGBoost alone. Why? Because XGBoost was meticulously hyperparameter-tuned via Optuna for 300 trials, while LightGBM and CatBoost were running on default, un-tuned parameters. Averaging a highly-tuned "genius" model with two un-tuned "baseline" models diluted the overall accuracy. 
+  * **Conclusion:** The complexity of maintaining, tuning, and deploying a 3-model ensemble is not justified by the negative performance yield. Attempt 8 (Tuned XGBoost) was previously declared the Champion.
+
+---
+
+### $\color{#38BDF8}\text{11th Attempt: Data Leakage Fix and Champion Model Upgrade (Success)}$
+* **Configuration:**
+  1. A critical data leakage bug was identified in `02_eda_visualizations.py` where artist skip rates were calculated globally using `.mean()`. This allowed the model to subtly cheat by "looking into the future" of an artist's career.
+  2. The leakage was patched by calculating a mathematically pure, expanding window skip rate using `cumsum()` and `cumcount()` up to the exact moment of the stream.
+  3. Re-ran Optuna Bayesian Tuning (300 trials) on the newly cleaned, leak-free dataset to find the mathematically optimal hyperparameter bounds.
+* **Scores (New Production Champion):**
+  * **ROC-AUC:** **0.858** (Improved from 0.857)
+  * **Guaranteed Precision:** **80.0%**
+  * **Maximized Safe Recall:** **47.67%** (Improved from 47.4%)
+  * **Scale Pos Weight:** Increased significantly to **12.05** to force stronger attention on the minority skip class.
+* **Diagnosis and Why it Succeeded:**
+  * **$\color{#38BDF8}{\text{Cleaner Signal:}}$** By fixing the future-leakage, the features became strictly causal. The Optuna optimizer was no longer distracted by mathematically impossible correlations, allowing it to find a cleaner, more robust decision boundary.
+  * **Conclusion:** Attempt 11 is mathematically superior and strictly complies with all business SLAs. It is formally locked in and deployed as the absolute Production Champion.
