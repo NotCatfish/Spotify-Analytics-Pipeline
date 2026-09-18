@@ -13,7 +13,7 @@ An end-to-end Python data engineering, automated exploratory data analysis (EDA)
 - **$\color{#38BDF8}\text{High-Throughput Streaming Database Layer:}$** SQLite in-memory pragmas and PostgreSQL native buffer streaming via `COPY FROM STDIN` (slashing export time from **$\color{#38BDF8}\text{15 mins to 3.2s}$**).
 - **$\color{#38BDF8}\text{Automated Headless Markdown Report:}$** Generates a 5-section executive dossier with **$\color{#38BDF8}\text{21 Japanese Winter Night figures}$** into [`reports/EDA_Report.md`](reports/EDA_Report.md).
 - **$\color{#38BDF8}\text{Zero Temporal Data Leakage:}$** Strict **$\color{#38BDF8}\text{chronological walk-forward split}$** (2023–2024 train, 2025+ test) with dynamic target encoding.
-- **$\color{#38BDF8}\text{Defeated Severe Concept Drift:}$** Solved a user behavioral shift (skip rates dropping from 31% down to 4%) through micro-mood feature engineering, achieving **$\color{#38BDF8}\text{97 Percent accuracy}$** (**$\color{#38BDF8}\text{ROC-AUC: 0.824}$**).
+- **$\color{#38BDF8}\text{Real-Time Serving, Shadow Mode and Docker:}$** Production FastAPI microservice with dynamic In-Memory Feature Store (<0.2s startup), Spotipy live queue inspection, in-place ANSI terminal monitor (`live_monitor.py`), passive Shadow Evaluation (`audit_logger.py`, `production_audit.db`), and lightweight multi-stage containerization (`Dockerfile`, `docker-compose.yml`).
 - **$\color{#38BDF8}\text{Technical Blueprint:}$** Read the complete mathematical derivations and engineering rationale in [`docs/eda/EDA_THEORY_AND_METHODS.md`](docs/eda/EDA_THEORY_AND_METHODS.md).
 
 ---

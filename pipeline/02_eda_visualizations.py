@@ -1390,14 +1390,19 @@ def run_feature_engineering_and_export(master_df):
     master_df["hour_cos"] = np.cos(2 * np.pi * master_df["hour_of_day"] / 24.0).astype("float32")
 
     # 4. Dynamic Target Encoding with Laplace Smoothing (Strict Zero-Leakage)
-    global_skip_rate = master_df["is_skip"].mean()
+    # Expanding Window Global Prior (to prevent peeking into future data)
+    master_df["global_past_plays"] = np.arange(len(master_df))
+    master_df["global_past_skips"] = master_df["is_skip"].cumsum() - master_df["is_skip"]
+    master_df["rolling_global_skip_rate"] = (master_df["global_past_skips"] / np.maximum(master_df["global_past_plays"], 1)).astype("float32")
+    
+    smoothing_weight = 20
     smoothing_weight = 20
 
     # A. Artist Affinity & Cold-Start Indicator
     master_df["artist_past_plays"] = master_df.groupby("artist_name").cumcount()
     master_df["artist_past_skips"] = master_df.groupby("artist_name")["is_skip"].cumsum() - master_df["is_skip"]
     master_df["artist_smoothed_skip_rate"] = (
-        (master_df["artist_past_skips"] + (smoothing_weight * global_skip_rate)) /
+        (master_df["artist_past_skips"] + (smoothing_weight * master_df["rolling_global_skip_rate"])) /
         (master_df["artist_past_plays"] + smoothing_weight)
     ).astype("float32")
     master_df["is_cold_start_artist"] = (master_df["artist_past_plays"] < 3).astype("int8")
@@ -1406,7 +1411,7 @@ def run_feature_engineering_and_export(master_df):
     master_df["song_past_plays"] = master_df.groupby("song_name").cumcount()
     master_df["song_past_skips"] = master_df.groupby("song_name")["is_skip"].cumsum() - master_df["is_skip"]
     master_df["song_smoothed_skip_rate"] = (
-        (master_df["song_past_skips"] + (smoothing_weight * global_skip_rate)) /
+        (master_df["song_past_skips"] + (smoothing_weight * master_df["rolling_global_skip_rate"])) /
         (master_df["song_past_plays"] + smoothing_weight)
     ).astype("float32")
 
@@ -1421,7 +1426,7 @@ def run_feature_engineering_and_export(master_df):
     master_df["genre_past_plays"] = master_df.groupby("primary_genre").cumcount()
     master_df["genre_past_skips"] = master_df.groupby("primary_genre")["is_skip"].cumsum() - master_df["is_skip"]
     master_df["genre_smoothed_skip_rate"] = (
-        (master_df["genre_past_skips"] + (smoothing_weight * global_skip_rate)) /
+        (master_df["genre_past_skips"] + (smoothing_weight * master_df["rolling_global_skip_rate"])) /
         (master_df["genre_past_plays"] + smoothing_weight)
     ).astype("float32")
 
@@ -1430,7 +1435,7 @@ def run_feature_engineering_and_export(master_df):
     master_df["album_past_plays"] = master_df.groupby("album_name_clean").cumcount()
     master_df["album_past_skips"] = master_df.groupby("album_name_clean")["is_skip"].cumsum() - master_df["is_skip"]
     master_df["album_smoothed_skip_rate"] = (
-        (master_df["album_past_skips"] + (smoothing_weight * global_skip_rate)) /
+        (master_df["album_past_skips"] + (smoothing_weight * master_df["rolling_global_skip_rate"])) /
         (master_df["album_past_plays"] + smoothing_weight)
     ).astype("float32")
 
@@ -1439,12 +1444,13 @@ def run_feature_engineering_and_export(master_df):
     master_df["reason_past_plays"] = master_df.groupby("reason_start_clean").cumcount()
     master_df["reason_past_skips"] = master_df.groupby("reason_start_clean")["is_skip"].cumsum() - master_df["is_skip"]
     master_df["reason_start_smoothed_skip_rate"] = (
-        (master_df["reason_past_skips"] + (smoothing_weight * global_skip_rate)) /
+        (master_df["reason_past_skips"] + (smoothing_weight * master_df["rolling_global_skip_rate"])) /
         (master_df["reason_past_plays"] + smoothing_weight)
     ).astype("float32")
 
     # Cleanup intermediate calculation columns
     master_df = master_df.drop(columns=[
+        "global_past_plays", "global_past_skips",
         "artist_past_plays", "artist_past_skips",
         "song_past_plays", "song_past_skips",
         "primary_genre", "genre_past_plays", "genre_past_skips",

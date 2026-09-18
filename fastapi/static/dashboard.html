@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Live ML Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        
+        :root {
+            --bg-color: #000000;
+            --card-bg: #121212;
+            --player-bg: #181818;
+            --accent: gold;
+            --text-main: gold;
+            --text-muted: #b89a42; /* A muted gold/goldenrod */
+            --green: #1db954; /* Spotify green, kept for skip bars if needed, or we can use gold. Let's use gold variants */
+            --red: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .main-content {
+            flex: 1;
+            width: 100%;
+            max-width: 1000px;
+            padding: 20px;
+            overflow-y: auto;
+            padding-bottom: 120px; /* Space for the bottom player */
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .state-badge {
+            padding: 8px 16px;
+            border-radius: 9999px;
+            font-weight: 800;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .current-track-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .queue-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .queue-item {
+            background-color: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .track-info {
+            flex: 1;
+        }
+        
+        .track-name { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+        .track-artist { color: var(--text-muted); font-size: 14px; }
+
+        .prob-container {
+            width: 250px;
+            text-align: right;
+        }
+
+        .prob-bar-bg {
+            width: 100%;
+            height: 8px;
+            background-color: rgba(255,215,0,0.1);
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .prob-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        /* SVG Icons */
+        svg { fill: currentColor; }
+    </style>
+</head>
+<body>
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h1 style="margin: 0; font-size: 24px;">Queue Risk Forecast</h1>
+                <div id="last-event" style="color: var(--text-muted); font-size: 14px; margin-top: 5px;">Connecting...</div>
+            </div>
+            <div id="session-state" class="state-badge">IDLE</div>
+        </div>
+
+        <div class="current-track-card" id="current-track-card" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div>
+                    <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; margin-bottom: 4px;">Now Playing</div>
+                    <div id="ct-song" style="font-weight: 800; font-size: 18px;">Song Name</div>
+                    <div id="ct-artist" style="color: var(--text-muted); font-size: 14px;">Artist</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; font-weight: 800; letter-spacing: 1px;">Skips (3m)</div>
+                    <div id="ct-skips" style="font-size: 24px; font-weight: 800; color: var(--red);">0</div>
+                </div>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600;">
+                <span id="ct-progress-text">0:00</span>
+                <div class="prob-bar-bg" style="margin: 0; flex: 1;">
+                    <div id="ct-progress-bar" class="prob-bar-fill" style="width: 0%; background-color: var(--accent);"></div>
+                </div>
+                <span id="ct-duration-text">0:00</span>
+            </div>
+        </div>
+
+        <div class="queue-container" id="queue-list">
+            <!-- Queue items injected here via JS -->
+            <div style='color: var(--text-muted); text-align:center;'>Loading queue...</div>
+        </div>
+    </div>
+
+    <script src="/static/app.js?v=7"></script>
+</body>
+</html>

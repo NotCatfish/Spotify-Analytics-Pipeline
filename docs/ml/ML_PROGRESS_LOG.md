@@ -131,3 +131,34 @@ This document is the empirical research log for the Spotify Skip Prediction Mode
   3. **$\color{#38BDF8}\text{Threshold Operating Window:}$** Finding the optimal operating threshold at **0.676** provided a stable, well-centered probability margin that safely preserves 80% precision under production data distribution shifts.
   4. **$\color{#38BDF8}\text{Ingestion Numeric Auto-Compression (2x Hardware Throughput Boost):}$** By introducing automated schema downcasting upon SQL ingestion (`compress_numeric_columns` -> `int8` flags/small counts, `int16` years/streaks, `int32` counts, `float32` continuous rates), the in-memory footprint was slashed from 101.45 MB to 64.53 MB (-36.4%). This eliminated host-to-device PCIe bandwidth saturation and FP64 emulation bottlenecks on the RTX 3060, doubling parallel Optuna search throughput from **2 it/s to 4 it/s** (slashing 300-trial search time from 2.5 minutes down to ~1.25 minutes).
 
+---
+
+### $\color{#38BDF8}\text{9th Attempt: The Custom Focal Loss Experiment (Failed)}$
+* **Configuration:** 
+  1. Implemented a custom pure-Python `focal_loss_objective` function to replace XGBoost's default binary log-loss.
+  2. Set $\gamma = 2.0$ to aggressively multiply the gradient penalty on "hard" false negatives (skips that the model confidently predicted as listens).
+  3. Injected the custom objective directly into the Optuna search and the Champion model evaluation.
+* **Scores:**
+  * **ROC-AUC:** **0.860** (Slight increase from 0.857)
+  * **Guaranteed Precision:** **80.0%**
+  * **Maximized Safe Recall:** **46.1%** (Dropped from 47.4%)
+* **Diagnosis and Why it Failed:**
+  1. **$\color{#38BDF8}\text{The "Noisy Label" Trap:}$** Focal Loss mathematically forces the decision trees to obsess over the absolute hardest examples. In this dataset, a "hard" false negative is often just random noise (e.g., the user accidentally bumping the skip button, or a momentary distraction). By overfitting to these noisy, unpredictable outliers, the model lost its generalization on "normal" predictable skips, causing overall recall to drop.
+  2. **$\color{#38BDF8}\text{CPU Math Bottleneck:}$** Evaluating custom pure-Python objective functions across 38,000 rows forced XGBoost to constantly shuttle data back and forth between the GPU (CUDA cores) and CPU (NumPy). This crippled the hardware acceleration, pegging the Ryzen 7 CPU at 100% and exposing the tradeoff between custom flexibility and native C++ optimization. 
+  * **Conclusion:** The experiment proved that standard log-loss with tuned regularization (Attempt 8) is vastly superior for this dataset. Attempt 8 remains the Champion.
+
+---
+
+### $\color{#38BDF8}\text{10th Attempt: Multi-Model Ensembling (Stacking & Soft Voting) (Failed)}$
+* **Configuration:** 
+  1. Trained the highly-tuned Champion XGBoost model alongside default, un-tuned LightGBM (Leaf-wise growth) and CatBoost (Ordered Boosting) models.
+  2. First Attempt (Stacking Classifier): Used a Logistic Regression Meta-Model with `class_weight='balanced'`.
+  3. Second Attempt (Soft Voting): Replaced the Stacker with a simple average probability ensemble to bypass the CEO.
+* **Scores (Soft Voting):**
+  * **ROC-AUC:** **0.850** (Dropped from 0.857)
+  * **Guaranteed Precision:** **80.0%**
+  * **Maximized Safe Recall:** **44.0%** (Dropped from 47.4%)
+* **Diagnosis and Why it Failed:**
+  1. **$\color{#38BDF8}\text{Meta-Model Multicollinearity:}$** In the initial Stacking attempt, applying `class_weight='balanced'` to the base models AND the Meta-Model caused extreme probability distortion. The Logistic Regression CEO became confused by the heavily correlated probabilities and inverted the predictions (ROC-AUC plummeted to 0.404).
+  2. **$\color{#38BDF8}\text{The Dilution Effect (Soft Voting):}$** While Soft Voting fixed the inversion, it performed worse than XGBoost alone. Why? Because XGBoost was meticulously hyperparameter-tuned via Optuna for 300 trials, while LightGBM and CatBoost were running on default, un-tuned parameters. Averaging a highly-tuned "genius" model with two un-tuned "baseline" models diluted the overall accuracy. 
+  * **Conclusion:** The complexity of maintaining, tuning, and deploying a 3-model ensemble is not justified by the negative performance yield. Attempt 8 (Tuned XGBoost) is formally declared the final Production Champion.

@@ -29,9 +29,8 @@ models/
 # SQL Directory
 sql/
 
-# API & Microservices
-fastapi/
-fastapi_bootcamp/
+# Tutorials & Learning
+tutorials/
 
 # Agents & Tooling Directories
 .agents/
@@ -41,6 +40,7 @@ agents/
 .env
 *.env
 .env.*
+.secrets/
 *.pem
 *.key
 *.secret
@@ -52,6 +52,9 @@ agents/
 # Temporary files, logs & scratch
 scratch/
 *.log
+.cache*
+.spotify_cache
+catboost_info/
 update_output.py
 update_plotly.py
 update_progress.py
@@ -68,3 +71,6 @@ docs/ml/ML_PLAN.md
 docs/AI_HANDOFF.md
 docs/ROADMAP.md
 docs/PREVIOUS_CHAT_SUMMARIES.md
+docs/CHANGELOG.md
+docs/setup.md
+docs/setup-troubleshooting.md
