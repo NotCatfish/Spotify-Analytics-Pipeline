@@ -365,10 +365,15 @@ def train_and_evaluate_models(feature_df):
     print(f"XGBoost scale_pos_weight: {imbalance_ratio:.2f}")
 
     xgb_model = XGBClassifier(
-        n_estimators=100,
-        scale_pos_weight=imbalance_ratio,
-        learning_rate=0.1,
-        max_depth=6,
+        n_estimators=200,
+        max_depth=7,
+        learning_rate=0.013358453305942913,
+        scale_pos_weight=12.057999839326373,
+        min_child_weight=7,
+        subsample=0.660888531853575,
+        colsample_bytree=0.6065321387834373,
+        reg_alpha=0.00802719563175066,
+        reg_lambda=7.129956386963889,
         random_state=42,
         n_jobs=-1
     )
