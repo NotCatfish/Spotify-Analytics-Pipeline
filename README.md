@@ -202,14 +202,14 @@ The microservice (`app/api/main.py`) provides real-time model serving and queue 
 
 ### **$\color{#38BDF8}\text{Dual-Policy Action Output}$**
 When `/predict-skip` identifies a high skip risk:
-1. **CDN Buffer Policy:** Dispatches `JIT_3SEC_CHUNKING` to throttle pre-fetch buffers, halting wasted 30-second audio downloads.
-2. **Recommender Policy:** Dispatches `SILENT_AUTOPLAY_PURGE` to remove the offending track before the user experiences playback fatigue.
+1. **$\color{#38BDF8}\text{CDN Buffer Policy:}$** Dispatches `JIT_3SEC_CHUNKING` to throttle pre-fetch buffers, halting wasted 30-second audio downloads.
+2. **$\color{#38BDF8}\text{Recommender Policy:}$** Dispatches `SILENT_AUTOPLAY_PURGE` to remove the offending track before the user experiences playback fatigue.
 
 ### **$\color{#38BDF8}\text{Live Monitoring Dashboard}$**
 Access `http://localhost:8000/dashboard` in your browser to view:
-- **Now Playing Card:** Current song, artist, and animated progress bar.
-- **Upcoming Queue Forecast:** Next 5 songs color-coded by risk tier (`SAFE`, `MODERATE`, `HIGH RISK`, `CRITICAL SKIP`).
-- **Shadow Audit Metrics:** Cumulative real-time confusion matrix (`TP`, `TN`, `FP`, `FN`) with rolling Precision and Recall.
+- **$\color{#38BDF8}\text{Now Playing Card:}$** Current song, artist, and animated progress bar.
+- **$\color{#38BDF8}\text{Upcoming Queue Forecast:}$** Next 5 songs color-coded by risk tier (`SAFE`, `MODERATE`, `HIGH RISK`, `CRITICAL SKIP`).
+- **$\color{#38BDF8}\text{Shadow Audit Metrics:}$** Cumulative real-time confusion matrix (`TP`, `TN`, `FP`, `FN`) with rolling Precision and Recall.
 
 ---
 
@@ -234,9 +234,9 @@ app/tests/
 ```
 
 ### **$\color{#38BDF8}\text{Continuous Integration (GitHub Actions)}$**
-- **Trigger:** Every `push` and `pull_request` targeting `main`.
-- **Environment:** Ubuntu runner with Python 3.11.
-- **Steps:**
+- **$\color{#38BDF8}\text{Trigger:}$** Every `push` and `pull_request` targeting `main`.
+- **$\color{#38BDF8}\text{Environment:}$** Ubuntu runner with Python 3.11.
+- **$\color{#38BDF8}\text{Pipeline Stages:}$**
   1. Code checkout and caching.
   2. Dependency installation (`requirements.txt`).
   3. Syntax and linting quality gate via `flake8`.
@@ -257,9 +257,9 @@ Heavy datasets and serialized model files are version-controlled via DVC rather 
 | Cleaned Feature Store | `data/processed/Engineered_Spotify_Portable.db.dvc` | ~58 MB |
 | Champion XGBoost Model | `models/spotify_skip_predictor_xgb.pkl.dvc` | ~1.2 MB |
 
-- **Git Footprint:** Git only tracks the 118-byte `.dvc` YAML pointer files containing MD5 hashes.
-- **Restoring Artifacts:** Run `dvc checkout` to fetch the exact binary version matching the current Git commit.
-- **Zero Accidental Leaks:** `.gitignore` enforces strict ignoring of `.db`, `.pkl`, and `.csv` files while explicitly allowing `.dvc` tracking pointers.
+- **$\color{#38BDF8}\text{Git Footprint:}$** Git only tracks the 118-byte `.dvc` YAML pointer files containing MD5 hashes.
+- **$\color{#38BDF8}\text{Restoring Artifacts:}$** Run `dvc checkout` to fetch the exact binary version matching the current Git commit.
+- **$\color{#38BDF8}\text{Zero Accidental Leaks:}$** `.gitignore` enforces strict ignoring of `.db`, `.pkl`, and `.csv` files while explicitly allowing `.dvc` tracking pointers.
 
 ---
 
@@ -294,8 +294,8 @@ Read the full experimental dossier in [`docs/ml/ML_PROGRESS_LOG.md`](docs/ml/ML_
 If you are an AI assistant, autonomous agent (Cursor, Windsurf, Claude, Copilot, Antigravity), or terminal CLI agent executing in this repository, you **MUST STRICTLY** adhere to these architectural rules:
 
 ### **$\color{#38BDF8}\text{1. Dynamic Path Resolution (Never Hardcode)}$**
-- **Strict Prohibition:** NEVER use hardcoded paths (`C:/...` or `/home/...`) or brittle relative paths (`../../`).
-- **Required Utility:** Always import and resolve paths through `app/path_utils.py`:
+- **$\color{#38BDF8}\text{Strict Prohibition:}$** NEVER use hardcoded paths (`C:/...` or `/home/...`) or brittle relative paths (`../../`).
+- **$\color{#38BDF8}\text{Required Utility:}$** Always import and resolve paths through `app/path_utils.py`:
   ```python
   from path_utils import find_project_root, resolve_path
   PROJECT_ROOT = find_project_root(__file__)
@@ -334,14 +334,14 @@ python app/pipeline/06_ab_testing_simulation.py
 - In CI environments where model binaries are tracked via DVC, model-dependent tests are skipped via `@requires_model` or `pytest.skip()`. Do not alter these skip markers to hard assertions.
 
 ### **$\color{#38BDF8}\text{4. Binary & Data Leakage Prevention}$**
-- **Never Commit Heavy Files:** Raw `.db`, `.pkl`, `.7z`, and `.csv` files are ignored by Git.
-- **Track DVC Pointers:** When data or models change, use DVC and commit the resulting `.dvc` pointers:
+- **$\color{#38BDF8}\text{Never Commit Heavy Files:}$** Raw `.db`, `.pkl`, `.7z`, and `.csv` files are ignored by Git.
+- **$\color{#38BDF8}\text{Track DVC Pointers:}$** When data or models change, use DVC and commit the resulting `.dvc` pointers:
   ```bash
   dvc add data/processed/Engineered_Spotify_Portable.db
   dvc add models/spotify_skip_predictor_xgb.pkl
   git add data/processed/*.dvc models/*.dvc
   ```
-- **Scrub Research Notebooks:** All `.ipynb` notebooks in `app/notebooks/` must have execution counts and cell outputs cleared before committing to protect PII.
+- **$\color{#38BDF8}\text{Scrub Research Notebooks:}$** All `.ipynb` notebooks in `app/notebooks/` must have execution counts and cell outputs cleared before committing to protect PII.
 
 ---
 
@@ -365,7 +365,7 @@ Spotify-Analytics-Pipeline/
 
 ## <a id="getting-started--usage"></a>$\color{#F59E0B}{\text{Getting Started and Usage}}$
 
-### Prerequisites
+### **$\color{#38BDF8}\text{Prerequisites}$**
 - Python 3.9+
 - Git & DVC
 - Spotify Developer Account (for live API integration)
