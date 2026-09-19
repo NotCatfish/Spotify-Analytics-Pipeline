@@ -18,6 +18,8 @@ import joblib
 import matplotlib
 matplotlib.use("Agg")  # Non-interactive backend for server/CLI environments
 import matplotlib.pyplot as plt
+import mlflow
+import mlflow.xgboost
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -27,32 +29,30 @@ from sqlalchemy import create_engine, text
 from xgboost import XGBClassifier
 
 # --- Environment & Directory Setup ---
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from path_utils import find_project_root, resolve_path
+
+PROJECT_ROOT = find_project_root(__file__)
 env_path = find_dotenv(usecwd=True)
 if not env_path:
     for candidate in [
-        Path.cwd() / "ML_Roadmap" / ".env",
-        Path.cwd().parent / "ML_Roadmap" / ".env",
-        Path.cwd().parent / ".env"
+        PROJECT_ROOT / ".env",
+        PROJECT_ROOT / "ML_Roadmap" / ".env",
     ]:
         if candidate.exists():
             env_path = str(candidate)
             break
 if env_path:
     load_dotenv(env_path)
-
-if Path.cwd().name == "notebooks" or Path.cwd().name == "pipeline":
-    PROJECT_ROOT = Path.cwd().parent
-else:
-    PROJECT_ROOT = Path.cwd() / "ML_Roadmap" if (Path.cwd() / "ML_Roadmap").exists() else Path.cwd()
-
-DATA_DIR = PROJECT_ROOT / "data"
-PROCESSED_DIR = DATA_DIR / "processed"
+DATA_DIR = resolve_path("data")
+PROCESSED_DIR = resolve_path("data/processed")
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
-MODELS_DIR = PROJECT_ROOT / "models"
+MODELS_DIR = resolve_path("models")
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-REPORTS_DIR = PROJECT_ROOT / "reports"
+REPORTS_DIR = resolve_path("docs/reports")
 IMAGES_DIR = REPORTS_DIR / "images"
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 IMAGES_DIR.mkdir(parents=True, exist_ok=True)
@@ -443,6 +443,52 @@ def train_and_evaluate_models(feature_df):
     joblib.dump(model_payload, str(model_artifact_path))
     print(f"\nTrained model artifact saved successfully to: {model_artifact_path}")
     print(f"Artifact File Size: {os.path.getsize(model_artifact_path) / 1024:.2f} KB")
+
+    # 7. MLflow Experiment Tracking & Model Registry Integration
+    print("\n[MLflow] Logging Experiment & Registering Champion Model...")
+    try:
+        mlflow.set_experiment("Spotify_Skip_Prediction")
+        with mlflow.start_run(run_name="Champion_Attempt_11_XGBoost"):
+            # Log Hyperparameters
+            mlflow.log_params({
+                "n_estimators": 200,
+                "max_depth": 7,
+                "learning_rate": 0.013358,
+                "scale_pos_weight": 12.058,
+                "min_child_weight": 7,
+                "subsample": 0.660888,
+                "colsample_bytree": 0.606532,
+                "reg_alpha": 0.008027,
+                "reg_lambda": 7.129956,
+                "best_threshold": float(best_thresh_xgb)
+            })
+
+            # Log Metrics
+            roc_auc_val = float(roc_auc_score(y_test, y_probs_xgb))
+            prec_val = float(precisions_xgb[best_idx_xgb])
+            rec_val = float(recalls_xgb[best_idx_xgb])
+            f1_val = float(f1_scores_xgb[best_idx_xgb])
+
+            mlflow.log_metrics({
+                "roc_auc": roc_auc_val,
+                "precision": prec_val,
+                "recall": rec_val,
+                "f1_score": f1_val
+            })
+
+            # Log Confusion Matrix Artifact Image
+            if cm_fig_path.exists():
+                mlflow.log_artifact(str(cm_fig_path), artifact_path="figures")
+
+            # Log Model Artifact & Register in MLflow Model Registry
+            mlflow.xgboost.log_model(
+                xgb_model,
+                artifact_path="model",
+                registered_model_name="Spotify_Skip_Predictor_XGBoost"
+            )
+            print("[SUCCESS] [MLflow] Successfully logged experiment run and registered Champion model into MLflow Model Registry!")
+    except Exception as e:
+        print(f"[WARNING] [MLflow] MLflow logging warning: {e}")
 
 
 def main():

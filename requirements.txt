@@ -13,3 +13,6 @@ notebook
 python-dotenv
 tabulate
 kaleido
+pytest
+httpx
+mlflow

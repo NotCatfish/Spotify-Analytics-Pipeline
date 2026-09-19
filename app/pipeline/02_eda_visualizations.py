@@ -28,29 +28,27 @@ import seaborn as sns
 from sqlalchemy import create_engine, text
 
 # --- Environment & Directory Setup ---
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from path_utils import find_project_root, resolve_path
+
+PROJECT_ROOT = find_project_root(__file__)
 env_path = find_dotenv(usecwd=True)
 if not env_path:
     for candidate in [
-        Path.cwd() / "ML_Roadmap" / ".env",
-        Path.cwd().parent / "ML_Roadmap" / ".env",
-        Path.cwd().parent / ".env"
+        PROJECT_ROOT / ".env",
+        PROJECT_ROOT / "ML_Roadmap" / ".env",
     ]:
         if candidate.exists():
             env_path = str(candidate)
             break
 if env_path:
     load_dotenv(env_path)
-
-if Path.cwd().name == "notebooks" or Path.cwd().name == "pipeline":
-    PROJECT_ROOT = Path.cwd().parent
-else:
-    PROJECT_ROOT = Path.cwd() / "ML_Roadmap" if (Path.cwd() / "ML_Roadmap").exists() else Path.cwd()
-
-DATA_DIR = PROJECT_ROOT / "data"
-PROCESSED_DIR = DATA_DIR / "processed"
+DATA_DIR = resolve_path("data")
+PROCESSED_DIR = resolve_path("data/processed")
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
-REPORTS_DIR = PROJECT_ROOT / "reports"
+REPORTS_DIR = resolve_path("docs/reports")
 IMAGES_DIR = REPORTS_DIR / "images"
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 IMAGES_DIR.mkdir(parents=True, exist_ok=True)

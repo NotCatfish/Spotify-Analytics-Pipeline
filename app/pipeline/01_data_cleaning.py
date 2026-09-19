@@ -22,12 +22,16 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from sqlalchemy import create_engine
 
 # --- Initializations & Environment Discovery ---
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from path_utils import find_project_root, resolve_path
+
+PROJECT_ROOT = find_project_root(__file__)
 env_path = find_dotenv(usecwd=True)
 if not env_path:
     for candidate in [
-        Path.cwd() / "ML_Roadmap" / ".env",
-        Path.cwd().parent / "ML_Roadmap" / ".env",
-        Path.cwd().parent / ".env"
+        PROJECT_ROOT / ".env",
+        PROJECT_ROOT / "ML_Roadmap" / ".env",
     ]:
         if candidate.exists():
             env_path = str(candidate)
@@ -35,13 +39,8 @@ if not env_path:
 if env_path:
     load_dotenv(env_path)
 
-if Path.cwd().name == "notebooks" or Path.cwd().name == "pipeline":
-    PROJECT_ROOT = Path.cwd().parent
-else:
-    PROJECT_ROOT = Path.cwd() / "ML_Roadmap" if (Path.cwd() / "ML_Roadmap").exists() else Path.cwd()
-
-DATA_DIR = PROJECT_ROOT / "data"
-PROCESSED_DIR = DATA_DIR / "processed"
+DATA_DIR = resolve_path("data")
+PROCESSED_DIR = resolve_path("data/processed")
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_BASE_NAME = "Cleaned_Spotify_Portable"
@@ -52,9 +51,8 @@ def load_raw_json(raw_dir=None):
     """Recursively locates and concatenates Spotify Streaming_History_Audio_*.json files."""
     if raw_dir is None:
         search_dirs = [
-            DATA_DIR / "raw",
+            resolve_path("data/raw"),
             PROJECT_ROOT / "data" / "raw",
-            PROJECT_ROOT.parent,
             PROJECT_ROOT
         ]
         file_paths = []

@@ -12,11 +12,15 @@ Calculates real-world production metrics:
 """
 
 import sqlite3
+import sys
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Optional
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from path_utils import resolve_path
 
-DB_PATH = Path(__file__).resolve().parent.parent / "data" / "production_audit.db"
+DB_PATH = resolve_path("data/audit/production_audit.db")
+
 
 
 def init_audit_db():

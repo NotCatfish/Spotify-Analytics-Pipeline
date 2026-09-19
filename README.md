@@ -1,5 +1,7 @@
 # Spotify Analytics & Machine Learning Pipeline
 
+![CI/CD Pipeline](https://github.com/NotCatfish/Spotify-Analytics-Pipeline/actions/workflows/ci.yml/badge.svg)
+
 An end-to-end Python data engineering, automated exploratory data analysis (EDA), and predictive machine learning pipeline that transforms raw Spotify listening logs into deep behavioral insights and user skip predictions.
 
 ---
@@ -169,23 +171,46 @@ All scripts feature an interactive prompt mode with default fallbacks on `Enter`
 
 **$\color{#38BDF8}\text{Step 1: Clean Raw Data}$**
 ```bash
-python pipeline/01_data_cleaning.py
+python app/pipeline/01_data_cleaning.py
 ```
 *(Prompts for your input source [json/sqlite/postgres] and target output [sqlite/postgres].)*
 
 **$\color{#38BDF8}\text{Step 2: Generate Automated EDA Visualizations and Markdown Report}$**
 ```bash
-python pipeline/02_eda_visualizations.py
+python app/pipeline/02_eda_visualizations.py
 ```
-*(Prompts once for `top_n` items to display, generates `reports/EDA_Report.md` + 21 charts in `reports/images/`, and interactively exports the ML feature store in the terminal.)*
+*(Prompts once for `top_n` items to display, generates `docs/reports/EDA_Report.md` + 21 charts in `docs/reports/images/`, and interactively exports the ML feature store in the terminal.)*
 
 **$\color{#38BDF8}\text{Step 3: Train Skip Prediction Models}$**
 ```bash
-python pipeline/03_ml_modeling.py
+python app/pipeline/03_ml_modeling.py
 ```
-*(Loads the feature store, trains balanced Random Forest and cost-sensitive XGBoost models, optimizes probability thresholds, and saves `models/spotify_skip_predictor_xgb.pkl`.)*
+*(Loads the feature store, trains balanced Random Forest and cost-sensitive XGBoost models, optimizes probability thresholds, logs MLflow experiments, and saves `models/spotify_skip_predictor_xgb.pkl`.)*
+
+**$\color{#38BDF8}\text{Step 4: Automated Retraining & Challenger Evaluation}$**
+```bash
+python app/pipeline/04_retrain_trigger.py --threshold 100
+python app/pipeline/05_challenger_evaluation.py
+```
+*(Monitors resolved audit feedback, retrains candidate challenger models, and auto-promotes to MLflow Production stage if performance improves.)*
+
+**$\color{#38BDF8}\text{Step 5: A/B Production Benchmark Simulation}$**
+```bash
+python app/pipeline/06_ab_testing_simulation.py
+```
+*(Benchmarks Production Champion vs High-Recall candidate models and logs date-time timestamped reports to `docs/ab_testing/AB_TESTING_RESULTS.md`.)*
+
+**$\color{#38BDF8}\text{Step 6: Reproducing Data & Models with DVC}$**
+```bash
+# Restore matching dataset and model binary pointers
+dvc checkout
+dvc status
+```
+*(Uses lightweight `.dvc` hash pointer files to verify dataset integrity and prevent raw binary leaks into Git.)*
+
 
 ---
+
 
 ## <a id="research-notebooks"></a>$\color{#F59E0B}{\text{Research Notebooks}}$
 

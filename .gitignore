@@ -7,27 +7,28 @@ __pycache__/
 env/
 venv/
 .venv/
+.pytest_cache/
 
-# Data Files & Directories
+# Data & Model Binaries (Ignored by Git; tracked via DVC)
 data/
-archive/
+!data/.gitkeep
+models/
+!models/.gitkeep
 *.csv
 *.json
 *.db
 *.sqlite
 *.sqlite3
 *.parquet
-
-# Machine Learning Models & Weights
-models/
 *.pkl
 *.joblib
 *.h5
 *.pt
 *.onnx
 
-# SQL Directory
-sql/
+# Allow DVC pointer files and configuration
+!*.dvc
+!.dvc/
 
 # Tutorials & Learning
 tutorials/
@@ -55,22 +56,15 @@ scratch/
 .cache*
 .spotify_cache
 catboost_info/
-update_output.py
-update_plotly.py
-update_progress.py
-refactor_eda.py
 
 # OS Generated Files
 .DS_Store
 Thumbs.db
 
-# Internal Documents & Reports
-reports/
-docs/antigravityrule.txt
+# Internal Documents & Reports (Not to be pushed to GitHub)
+docs/reports/
 docs/ml/ML_PLAN.md
-docs/AI_HANDOFF.md
-docs/ROADMAP.md
-docs/PREVIOUS_CHAT_SUMMARIES.md
-docs/CHANGELOG.md
-docs/setup.md
-docs/setup-troubleshooting.md
+docs/system_docs/AI_HANDOFF.md
+docs/system_docs/ROADMAP.md
+docs/system_docs/PREVIOUS_CHAT_SUMMARIES.md
+docs/system_docs/CHANGELOG.mdmlruns/

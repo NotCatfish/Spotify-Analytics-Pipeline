@@ -28,7 +28,8 @@ services:
   monitor:
     build: .
     container_name: spotify_ml_monitor
-    command: ["python", "live_monitor.py"]
+    command: ["python", "app/api/live_monitor.py"]
+
     restart: unless-stopped
     env_file:
       - .env

@@ -10,8 +10,14 @@ import math
 from datetime import datetime
 import pandas as pd
 import sqlite3
-MODEL_PATH = Path(__file__).resolve().parent.parent / "models" / "spotify_skip_predictor_xgb.pkl"
-DB_PATH = Path(__file__).resolve().parent.parent / "data" / "processed" / "Engineered_Spotify_Portable.db"
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from path_utils import resolve_path, find_project_root
+
+MODEL_PATH = resolve_path("models/spotify_skip_predictor_xgb.pkl")
+DB_PATH = resolve_path("data/processed/Engineered_Spotify_Portable.db")
+
 
 ml_artifacts=dict()
 
@@ -330,7 +336,7 @@ def get_dashboard():
                         } else {
                             renderDashboard(data);
                         }
-                        setTimeout(fetchData, 1000); // Auto refresh every 1s
+                        setTimeout(fetchData, 900); // Auto refresh every 0.9s
                     })
                     .catch(error => {
                         console.error('Error fetching data:', error);
@@ -413,7 +419,7 @@ def get_dashboard():
     </head>
     <body>
         <h2>🎵 Spotify ML Dashboard</h2>
-        <div class="loader">Live sync every 1.0s...</div>
+        <div class="loader">Live sync every 0.9s...</div>
         <div id="content">
             <div class="card" style="text-align: center; color: #888;">Connecting to Spotify API...</div>
         </div>
@@ -427,7 +433,7 @@ def get_dashboard_data():
     data = predict_live_queue(queue_limit=5)
     
     try:
-        audit_db_path = Path(__file__).resolve().parent.parent / "data" / "production_audit.db"
+        audit_db_path = resolve_path("data/audit/production_audit.db")
         conn = sqlite3.connect(audit_db_path)
         c = conn.cursor()
         c.execute("SELECT COUNT(*) FROM shadow_audit WHERE status='RESOLVED'")

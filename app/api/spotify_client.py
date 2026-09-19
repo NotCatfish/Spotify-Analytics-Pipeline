@@ -4,11 +4,15 @@ from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import requests
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from path_utils import resolve_path
 
-ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
+ENV_PATH = resolve_path(".env")
 load_dotenv(ENV_PATH)
 
-CACHE_PATH = str(Path(__file__).resolve().parent / ".spotify_cache")
+CACHE_PATH = str(resolve_path("app/api/.spotify_cache"))
 
 
 def get_spotify_oauth():
@@ -79,8 +83,17 @@ def get_lastfm_tags(artist_name: str, song_name: str = "") -> list:
     return []
 
 
+_LIVE_SPOTIFY_CACHE = {"timestamp": 0, "data": None}
+
 def get_live_spotify_data(queue_limit: int = 5):
-    """Fetches real-time playback and the upcoming queued songs using Spotipy."""
+    """Fetches real-time playback and upcoming queued songs using Spotipy with 3.5s in-memory caching to prevent 429 Rate Limiting."""
+    import time
+    now = time.time()
+    
+    # Return cached data if fresh (less than 0.9s old)
+    if _LIVE_SPOTIFY_CACHE["data"] is not None and (now - _LIVE_SPOTIFY_CACHE["timestamp"]) < 0.9:
+        return _LIVE_SPOTIFY_CACHE["data"]
+
     sp_oauth = get_spotify_oauth()
     token_info = sp_oauth.validate_token(sp_oauth.cache_handler.get_cached_token())
 
@@ -92,18 +105,24 @@ def get_live_spotify_data(queue_limit: int = 5):
             "auth_url": auth_url
         }
 
-    sp = spotipy.Spotify(auth=token_info["access_token"], requests_timeout=10, retries=3)
+    sp = spotipy.Spotify(auth=token_info["access_token"], requests_timeout=2, retries=0)
 
     try:
         playback = sp.current_playback()
     except Exception as e:
+        # If rate limited (429) or transient error, serve last cached data if available
+        if _LIVE_SPOTIFY_CACHE["data"] is not None:
+            return _LIVE_SPOTIFY_CACHE["data"]
         return {"status": "ERROR", "message": f"Spotify API request failed: {str(e)}"}
 
     if not playback or not playback.get("item"):
-        return {
+        res_idle = {
             "status": "IDLE",
             "message": "No active playback detected. Please play a track on your Spotify app first."
         }
+        _LIVE_SPOTIFY_CACHE["timestamp"] = now
+        _LIVE_SPOTIFY_CACHE["data"] = res_idle
+        return res_idle
 
     # Extract current track
     item = playback["item"]
@@ -136,7 +155,7 @@ def get_live_spotify_data(queue_limit: int = 5):
     except Exception:
         pass
 
-    return {
+    res_active = {
         "status": "ACTIVE",
         "current_track": {
             "id": track_id,
@@ -154,6 +173,9 @@ def get_live_spotify_data(queue_limit: int = 5):
         },
         "shuffle_mode": shuffle_state
     }
+    _LIVE_SPOTIFY_CACHE["timestamp"] = now
+    _LIVE_SPOTIFY_CACHE["data"] = res_active
+    return res_active
 
 def control_playback(action: str):
     """Controls Spotify playback (play, pause, next, previous)."""
