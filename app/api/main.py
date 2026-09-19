@@ -24,7 +24,10 @@ ml_artifacts=dict()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if MODEL_PATH.exists()==False:
-        raise FileNotFoundError(f"Model artifact not found at {MODEL_PATH}")
+        print(f"[WARNING] Model artifact not found at {MODEL_PATH}. Starting in degraded mode.")
+        ml_artifacts["is_ready"] = False
+        yield
+        return
     
     # Inject dummy focal_loss_objective into __main__ to fix joblib load error
     # (XGBoost saves the custom objective reference from training, but it's only needed for training)
