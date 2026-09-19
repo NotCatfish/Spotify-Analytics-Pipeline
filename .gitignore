@@ -8,6 +8,7 @@ env/
 venv/
 .venv/
 .pytest_cache/
+mlruns/
 
 # Data & Model Binaries (Ignored by Git; tracked via DVC)
 data/
@@ -63,8 +64,6 @@ Thumbs.db
 
 # Internal Documents & Reports (Not to be pushed to GitHub)
 docs/reports/
+docs/setup/
+docs/system_docs/
 docs/ml/ML_PLAN.md
-docs/system_docs/AI_HANDOFF.md
-docs/system_docs/ROADMAP.md
-docs/system_docs/PREVIOUS_CHAT_SUMMARIES.md
-docs/system_docs/CHANGELOG.mdmlruns/
