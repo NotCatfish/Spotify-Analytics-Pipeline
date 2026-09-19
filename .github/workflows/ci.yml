@@ -25,7 +25,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 pytest httpx
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f fastapi/requirements.txt ]; then pip install -r fastapi/requirements.txt; fi
+          if [ -f app/api/requirements.txt ]; then pip install -r app/api/requirements.txt; fi
 
       - name: Code Style & Syntax Check (flake8)
         run: |
