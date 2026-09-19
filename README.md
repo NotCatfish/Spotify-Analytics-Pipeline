@@ -17,7 +17,7 @@ An enterprise-grade, end-to-end Python data engineering, automated exploratory d
 - **$\color{#38BDF8}\text{Zero Temporal Data Leakage:}$** Strict **$\color{#38BDF8}\text{chronological walk-forward split}$** (2023–2024 train, 2025+ test) with dynamic expanding window target encoding and acute micro-mood momentum tracking.
 - **$\color{#38BDF8}\text{Real-Time Serving, Web Dashboard and Docker:}$** Production FastAPI microservice with dynamic In-Memory Feature Store (<0.2s startup), Spotify OAuth integration, Last.fm live genre enrichment, real-time dark-mode HTML dashboard (`/dashboard`), passive Shadow Audit logging (`audit_logger.py`), and multi-stage containerization (`Dockerfile`, `docker-compose.yml`).
 - **$\color{#38BDF8}\text{Dual-Policy Action Engine:}$** Live skip probabilities dispatch actionable operational policies in real time: CDN bandwidth throttling (`JIT_3SEC_CHUNKING` to eliminate wasted 30s pre-fetch bandwidth) and Recommender queue management (`SILENT_AUTOPLAY_PURGE`).
-- **$\color{#38BDF8}\text{Full Test Suite & Automated CI/CD Quality Gates:}$** 20 automated Pytest unit and integration tests across 6 dedicated test modules, backed by a local Git `pre-commit` hook and cloud GitHub Actions CI runner.
+- **$\color{#38BDF8}\text{Full Test Suite and Automated CI/CD Quality Gates:}$** 20 automated Pytest unit and integration tests across 6 dedicated test modules, backed by a local Git `pre-commit` hook and cloud GitHub Actions CI runner.
 - **$\color{#38BDF8}\text{Data Version Control (DVC):}$** Large datasets and model binaries tracked via lightweight `.dvc` pointers to prevent Git repository bloat while ensuring mathematical reproducibility.
 
 ---
@@ -170,7 +170,7 @@ Spotify-Analytics-Pipeline/
 - Triggers model retraining when resolved ground-truth feedback exceeds the configurable threshold (default: 100 tracks).
 - Supports `--force` execution for scheduled cron retraining.
 
-### **$\color{#38BDF8}\text{5.}$** [`app/pipeline/05_challenger_evaluation.py`](app/pipeline/05_challenger_evaluation.py) **$\color{#38BDF8}\text{(Challenger Evaluation & Promotion)}$**
+### **$\color{#38BDF8}\text{5.}$** [`app/pipeline/05_challenger_evaluation.py`](app/pipeline/05_challenger_evaluation.py) **$\color{#38BDF8}\text{(Challenger Evaluation and Promotion)}$**
 - Evaluates the retrained candidate model against the production Champion under strict guardrails:
   - **SLA Guardrail:** Precision >= 80%
   - **Recall Guardrail:** Recall improvement >= +1.0% without violating precision
@@ -184,7 +184,7 @@ Spotify-Analytics-Pipeline/
 
 ---
 
-## <a id="fastapi-microservice--web-dashboard"></a>$\color{#F59E0B}{\text{FastAPI Microservice & Web Dashboard}}$
+## <a id="fastapi-microservice--web-dashboard"></a>$\color{#F59E0B}{\text{FastAPI Microservice and Web Dashboard}}$
 
 The microservice (`app/api/main.py`) provides real-time model serving and queue forecasting:
 
@@ -213,7 +213,7 @@ Access `http://localhost:8000/dashboard` in your browser to view:
 
 ---
 
-## <a id="testing--cicd-pipeline"></a>$\color{#F59E0B}{\text{Testing & CI/CD Pipeline}}$
+## <a id="testing--cicd-pipeline"></a>$\color{#F59E0B}{\text{Testing and CI/CD Pipeline}}$
 
 A comprehensive test suite of **20 unit and integration tests** guarantees zero regressions across the codebase:
 
@@ -275,12 +275,12 @@ Leakage from      Random 80/20 Split  Chronological Split  Micro-Mood Baseline  
  Dropped)          uncovered)          from 31% to 4%)      Recall 0.48)         Precision 0.77)       Recall 47.4%)         46.1%, noisy data)   44.0%, diluted)       Recall 47.7%, Prec 80%)
 ```
 
-- **$\color{#38BDF8}\text{Attempts 1–3 (Target Leakage & Class Imbalance):}$** `sec_played` leaked the label (early skip truncates duration). Dropping it collapsed recall to 0% because 90% of tracks were non-skips.
+- **$\color{#38BDF8}\text{Attempts 1–3 (Target Leakage and Class Imbalance):}$** `sec_played` leaked the label (early skip truncates duration). Dropping it collapsed recall to 0% because 90% of tracks were non-skips.
 - **$\color{#38BDF8}\text{Attempt 4 (Repeated Song Leakage):}$** Random 80/20 splitting allowed identical songs to appear in train and test sets, allowing the model to peek into future preferences and inflating ROC-AUC to 0.948.
 - **$\color{#38BDF8}\text{Attempt 5 (Concept Drift Discovery):}$** Moving to a strict chronological split exposed severe concept drift: the user's skip rate fell from 31% in 2021 to 4% in 2025. Static historical models failed completely.
-- **$\color{#38BDF8}\text{Attempt 6 (Windowing & Micro-Mood Engineering):}$** Restricting data to `year >= 2023` and engineering immediate state indicators (`seconds_since_last_skip`, `skips_last_15m`) established a clean baseline (ROC-AUC: 0.824).
+- **$\color{#38BDF8}\text{Attempt 6 (Windowing and Micro-Mood Engineering):}$** Restricting data to `year >= 2023` and engineering immediate state indicators (`seconds_since_last_skip`, `skips_last_15m`) established a clean baseline (ROC-AUC: 0.824).
 - **$\color{#38BDF8}\text{Attempt 7 (19-Feature Matrix Expansion):}$** Shifted to a 70:30 chronological split and added acute velocity (`skips_last_3m`, `consecutive_listens_streak`), boosting ROC-AUC to 0.850 and Precision to 77% without hyperparameter tuning.
-- **$\color{#38BDF8}\text{Attempt 8 (GPU Bayesian Optuna & 80% Precision SLA):}$** Deployed 300-trial Optuna tuning on an RTX 3060 with an 80% precision guardrail. Hit 98% accuracy, 0.857 ROC-AUC, 47.39% recall, and F1 of 0.60.
+- **$\color{#38BDF8}\text{Attempt 8 (GPU Bayesian Optuna and 80 Percent Precision SLA):}$** Deployed 300-trial Optuna tuning on an RTX 3060 with an 80% precision guardrail. Hit 98% accuracy, 0.857 ROC-AUC, 47.39% recall, and F1 of 0.60.
 - **$\color{#38BDF8}\text{Attempt 9 (Custom Focal Loss - Failed):}$** Implemented a custom gamma=2.0 focal loss to penalize hard false negatives. ROC-AUC reached 0.860, but recall dropped to 46.1% due to the **Noisy Label Trap** (model overfit to erratic, unpredictable accidental skips).
 - **$\color{#38BDF8}\text{Attempt 10 (Multi-Model Ensembling - Failed):}$** Evaluated stacking and soft voting across XGBoost, LightGBM, and CatBoost. Soft voting dropped ROC-AUC to 0.850 and recall to 44.0% due to the **Dilution Effect** (averaging a 300-trial tuned XGBoost with untuned default models).
 - **$\color{#38BDF8}\text{Attempt 11 (Expanding Window Leakage Fix - Production Champion):}$** Patched a subtle future-leakage in EDA artist skip rates by replacing global means with strictly causal `cumsum() / cumcount()` expanding windows. Re-ran Optuna to establish the absolute mathematical ceiling: **ROC-AUC: 0.858**, **Guaranteed Precision: 80.0%**, **Maximized Safe Recall: 47.67%**, and `scale_pos_weight: 12.05`.
@@ -289,7 +289,7 @@ Read the full experimental dossier in [`docs/ml/ML_PROGRESS_LOG.md`](docs/ml/ML_
 
 ---
 
-## <a id="ai-agent-directive"></a>$\color{#F59E0B}{\text{AI Agent & IDE Directives}}$
+## <a id="ai-agent-directive"></a>$\color{#F59E0B}{\text{AI Agent and IDE Directives}}$
 
 If you are an AI assistant, autonomous agent (Cursor, Windsurf, Claude, Copilot, Antigravity), or terminal CLI agent executing in this repository, you **MUST STRICTLY** adhere to these architectural rules:
 
@@ -333,7 +333,7 @@ python app/pipeline/06_ab_testing_simulation.py
 - All 20 tests must pass. Do not bypass the Git pre-commit hook (`.git/hooks/pre-commit`).
 - In CI environments where model binaries are tracked via DVC, model-dependent tests are skipped via `@requires_model` or `pytest.skip()`. Do not alter these skip markers to hard assertions.
 
-### **$\color{#38BDF8}\text{4. Binary & Data Leakage Prevention}$**
+### **$\color{#38BDF8}\text{4. Binary and Data Leakage Prevention}$**
 - **$\color{#38BDF8}\text{Never Commit Heavy Files:}$** Raw `.db`, `.pkl`, `.7z`, and `.csv` files are ignored by Git.
 - **$\color{#38BDF8}\text{Track DVC Pointers:}$** When data or models change, use DVC and commit the resulting `.dvc` pointers:
   ```bash
@@ -408,7 +408,7 @@ python app/pipeline/05_challenger_evaluation.py
 python app/pipeline/06_ab_testing_simulation.py
 ```
 
-### **$\color{#38BDF8}\text{4. Running the Microservice & Web Dashboard}$**
+### **$\color{#38BDF8}\text{4. Running the Microservice and Web Dashboard}$**
 
 ```bash
 # Start FastAPI application with live reload
