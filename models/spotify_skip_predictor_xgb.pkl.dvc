@@ -1,0 +1,5 @@
+outs:
+- md5: dfdaa8d905d5616891be27f7d8e584af
+  size: 1192842
+  hash: md5
+  path: spotify_skip_predictor_xgb.pkl
