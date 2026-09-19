@@ -1,12 +1,6 @@
 # Spotify Analytics & Machine Learning Pipeline
 
 ![CI/CD Pipeline](https://github.com/NotCatfish/Spotify-Analytics-Pipeline/actions/workflows/ci.yml/badge.svg)
-![Python](https://img.shields.io/badge/Python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.13-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688.svg?logo=fastapi&logoColor=white)
-![DVC](https://img.shields.io/badge/DVC-Data%20Versioning-945DD6.svg?logo=dvc&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
-![Tests](https://img.shields.io/badge/Tests-20%20Passing-success)
-![License](https://img.shields.io/badge/License-MIT-green.svg)
 
 An enterprise-grade, end-to-end Python data engineering, automated exploratory data analysis (EDA), and predictive machine learning pipeline that transforms raw Spotify listening logs into deep behavioral insights, user skip predictions, and automated CDN / recommender policy enforcement.
 
@@ -20,7 +14,7 @@ An enterprise-grade, end-to-end Python data engineering, automated exploratory d
 - **$\color{#38BDF8}\text{9,157x Memory Reduction in Temporal Trends:}$** Used chunked temporal Map-Reduce instead of `.str.split().explode()`, dropping intermediate RAM from **$\color{#38BDF8}\text{1.6 GB to 0.18 MB}$**.
 - **$\color{#38BDF8}\text{High-Throughput Streaming Database Layer:}$** SQLite in-memory pragmas and PostgreSQL native buffer streaming via `COPY FROM STDIN` (slashing export time from **$\color{#38BDF8}\text{15 mins to 3.2s}$**).
 - **$\color{#38BDF8}\text{Automated Headless Markdown Report:}$** Generates a 5-section executive dossier with **$\color{#38BDF8}\text{21 Japanese Winter Night figures}$** into [`docs/reports/EDA_Report.md`](docs/reports/EDA_Report.md).
-- **$\color{#38BDF8}\text{Zero Temporal Data Leakage:}$** Strict **$\color{#38BDF8}\text{chronological walk-forward split}$** (2023–2024 train, 2025+ test) with dynamic target encoding and acute micro-mood momentum tracking.
+- **$\color{#38BDF8}\text{Zero Temporal Data Leakage:}$** Strict **$\color{#38BDF8}\text{chronological walk-forward split}$** (2023–2024 train, 2025+ test) with dynamic expanding window target encoding and acute micro-mood momentum tracking.
 - **$\color{#38BDF8}\text{Real-Time Serving, Web Dashboard and Docker:}$** Production FastAPI microservice with dynamic In-Memory Feature Store (<0.2s startup), Spotify OAuth integration, Last.fm live genre enrichment, real-time dark-mode HTML dashboard (`/dashboard`), passive Shadow Audit logging (`audit_logger.py`), and multi-stage containerization (`Dockerfile`, `docker-compose.yml`).
 - **$\color{#38BDF8}\text{Dual-Policy Action Engine:}$** Live skip probabilities dispatch actionable operational policies in real time: CDN bandwidth throttling (`JIT_3SEC_CHUNKING` to eliminate wasted 30s pre-fetch bandwidth) and Recommender queue management (`SILENT_AUTOPLAY_PURGE`).
 - **$\color{#38BDF8}\text{Full Test Suite & Automated CI/CD Quality Gates:}$** 20 automated Pytest unit and integration tests across 6 dedicated test modules, backed by a local Git `pre-commit` hook and cloud GitHub Actions CI runner.
@@ -37,6 +31,7 @@ An enterprise-grade, end-to-end Python data engineering, automated exploratory d
 - [Testing & CI/CD Pipeline](#testing--cicd-pipeline)
 - [Data Version Control (DVC)](#data-version-control-dvc)
 - [The ML Engineering Journey](#ml-engineering-journey)
+- [AI Agent & IDE Directives](#ai-agent-directive)
 - [Obtaining Your Spotify Data](#obtaining-your-spotify-data)
 - [Getting Started & Usage](#getting-started--usage)
 - [Research Notebooks](#research-notebooks)
@@ -47,48 +42,37 @@ An enterprise-grade, end-to-end Python data engineering, automated exploratory d
 
 ## <a id="system-architecture"></a>$\color{#F59E0B}{\text{System Architecture}}$
 
-### **$\color{#38BDF8}\text{End-to-End Production MLOps Flow}$**
-
 ```mermaid
 flowchart TD
-    subgraph Data_Engineering["1. Data Engineering & Ingestion"]
-        Raw["Raw Streaming JSON<br/>(data/raw/)"] --> Clean["app/pipeline/01_data_cleaning.py<br/>(ETL, PII Sanitization, Type Downcasting)"]
-        Clean --> DB[("Cleaned SQLite / Postgres DB<br/>data/processed/")]
-    end
+    classDef darkBox fill:#161b22,stroke:#ffffff,stroke-width:1px,color:#ffffff;
+    classDef storageBox fill:#0d1117,stroke:#8b949e,stroke-width:1px,stroke-dasharray: 4 4,color:#c9d1d9;
 
-    subgraph Analytics_Features["2. Analytics & Feature Engineering"]
-        DB --> EDA["app/pipeline/02_eda_visualizations.py<br/>(21 Japanese Winter Night Visuals)"]
-        EDA --> Report["docs/reports/EDA_Report.md"]
-        EDA --> FeatStore[("Engineered Feature Store<br/>Engineered_Spotify_Portable.db")]
-    end
+    A["Raw Spotify JSONs<br/>(data/raw/)"]:::darkBox --> B["app/pipeline/01_data_cleaning.py<br/>(ETL, PII Sanitization, SQL Downcasting)"]:::darkBox
+    B --> C[("Cleaned SQLite / Postgres Database<br/>data/processed/")]:::storageBox
+    
+    C --> D["app/pipeline/02_eda_visualizations.py<br/>(21 Japanese Winter Night Visuals)"]:::darkBox
+    D --> E["docs/reports/EDA_Report.md<br/>(Executive Dossier)"]:::storageBox
+    D --> F[("Engineered Feature Store<br/>Engineered_Spotify_Portable.db")]:::storageBox
+    
+    F --> G["app/pipeline/03_ml_modeling.py<br/>(Chrono Split, 19 Features, GPU Optuna)"]:::darkBox
+    G --> H["models/spotify_skip_predictor_xgb.pkl<br/>(Tracked via DVC)"]:::darkBox
+    G --> I[("MLflow Tracking")]:::storageBox
 
-    subgraph ML_Training["3. Model Training & Validation"]
-        FeatStore --> Train["app/pipeline/03_ml_modeling.py<br/>(Chrono Split, 19 Features, XGBoost + Optuna)"]
-        Train --> Artifacts["models/spotify_skip_predictor_xgb.pkl<br/>(Tracked with DVC)"]
-        Train --> MLflow[("MLflow Tracking")]
-    end
+    F --> J["app/pipeline/04_retrain_trigger.py<br/>(Retraining Feedback Loop)"]:::darkBox
+    J --> K["app/pipeline/05_challenger_evaluation.py<br/>(SLA Guardrail Evaluation)"]:::darkBox
+    H --> L["app/pipeline/06_ab_testing_simulation.py<br/>(Financial Net Utility A/B Engine)"]:::darkBox
+    L --> M["docs/ab_testing/AB_TESTING_RESULTS.md"]:::storageBox
 
-    subgraph Governance["4. Governance, Retraining & A/B Simulation"]
-        FeatStore --> Retrain["app/pipeline/04_retrain_trigger.py<br/>(Feedback Loop)"]
-        Retrain --> Eval["app/pipeline/05_challenger_evaluation.py<br/>(Guardrail Validation)"]
-        Artifacts --> ABSim["app/pipeline/06_ab_testing_simulation.py<br/>(Financial Net Utility Modeling)"]
-        ABSim --> ABReport["docs/ab_testing/AB_TESTING_RESULTS.md"]
-    end
-
-    subgraph Serving["5. Real-Time Microservice & Dashboard"]
-        Artifacts --> FastAPI["app/api/main.py<br/>(FastAPI Microservice)"]
-        FeatStore --> FastAPI
-        FastAPI --> Endpoints["/predict-skip<br/>/predict/live-queue<br/>/health"]
-        FastAPI --> Dash["/dashboard<br/>(Live Queue & Shadow Audit UI)"]
-        Endpoints --> ShadowDB[("data/audit/production_audit.db<br/>(Ground Truth Evaluator)")]
-    end
+    H --> N["app/api/main.py<br/>(FastAPI Real-Time Microservice)"]:::darkBox
+    F --> N
+    N --> O["REST Endpoints<br/>(/predict-skip, /predict/live-queue, /health)"]:::darkBox
+    N --> P["Web Dashboard<br/>(/dashboard - Live Queue & Audit UI)"]:::darkBox
+    O --> Q[("data/audit/production_audit.db<br/>(Shadow Ground-Truth Evaluator)")]:::storageBox
 ```
 
 ---
 
 ## <a id="repository-layout"></a>$\color{#F59E0B}{\text{Repository Layout}}$
-
-The repository is cleanly structured into modular, decoupled packages:
 
 ```
 Spotify-Analytics-Pipeline/
@@ -102,7 +86,7 @@ Spotify-Analytics-Pipeline/
 │   │   ├── main.py                       # FastAPI application & endpoints
 │   │   ├── schemas.py                    # Pydantic v2 request & response schemas
 │   │   └── spotify_client.py             # Spotipy & Last.fm live enrichment client
-│   ├── notebooks/                        # Research & exploratory notebooks
+│   ├── notebooks/                        # Scrubbed research notebooks
 │   │   ├── 01_data_cleaning.ipynb        # Ingestion, downcasting & PII purge
 │   │   ├── 02_eda_visualizations.ipynb   # Aesthetic visualizations & data profiling
 │   │   └── 03_ml_modeling.ipynb          # Optuna tuning, MLflow & model benchmark
@@ -131,7 +115,10 @@ Spotify-Analytics-Pipeline/
 │   ├── eda/                              # Mathematical derivations & EDA blueprints
 │   ├── ml/                               # ML experimentation logs & Optuna records
 │   ├── reports/                          # Generated markdown reports & figures
-│   └── setup/                            # Deployment, Last.fm & environment guides
+│   ├── setup/                            # Deployment, Last.fm & environment guides
+│   ├── AI_HANDOFF.md                     # Agent context snapshot & handoff protocol
+│   ├── CHANGELOG.md                      # Chronological version changelog
+│   └── ROADMAP.md                        # Strategic project roadmap & milestones
 ├── models/                               # Serialized XGBoost model artifacts (.dvc)
 ├── Dockerfile                            # Multi-stage production container specification
 ├── docker-compose.yml                    # Multi-container orchestration (API + UI)
@@ -170,7 +157,7 @@ Spotify-Analytics-Pipeline/
 - Dynamically accepts `top_n` ranking parameters for artists, tracks, and genres.
 - Autonomously generates **21 high-resolution Japanese Winter Night theme charts** saved in [`docs/reports/images/`](docs/reports/images/).
 - Generates a comprehensive executive markdown dossier in [`docs/reports/EDA_Report.md`](docs/reports/EDA_Report.md).
-- Computes smoothed expanding-window historical skip rates and exports the clean `Engineered_Spotify_Portable.db` feature store.
+- Computes smoothed expanding-window historical skip rates (`cumsum() / cumcount()`) and exports the clean `Engineered_Spotify_Portable.db` feature store.
 
 ### **$\color{#38BDF8}\text{3.}$** [`app/pipeline/03_ml_modeling.py`](app/pipeline/03_ml_modeling.py) **$\color{#38BDF8}\text{(Predictive Modeling Engine)}$**
 - Strictly executes chronological walk-forward splitting (2023–2024 train, 2025+ test) to eliminate lookahead bias and adapt to concept drift.
@@ -214,7 +201,7 @@ The microservice (`app/api/main.py`) provides real-time model serving and queue 
 | `GET` | `/callback` | Receives Spotify OAuth2 token and redirects to dashboard |
 
 ### **$\color{#38BDF8}\text{Dual-Policy Action Output}$**
-When `/predict-skip` identifies a high skip risk ($P(\text{skip}) \ge \text{threshold}$):
+When `/predict-skip` identifies a high skip risk:
 1. **CDN Buffer Policy:** Dispatches `JIT_3SEC_CHUNKING` to throttle pre-fetch buffers, halting wasted 30-second audio downloads.
 2. **Recommender Policy:** Dispatches `SILENT_AUTOPLAY_PURGE` to remove the offending track before the user experiences playback fatigue.
 
@@ -241,7 +228,7 @@ app/tests/
 ├── test_ab_simulation.py           # 3 Tests: Artifact presence, utility formula, champion dominance
 ├── test_api.py                     # 4 Tests: /health check, /predict-skip success & 422, mocked live queue
 ├── test_dvc_tracking.py            # 3 Tests: .dvc pointer presence, YAML md5 validity, size < 500B
-├── test_feature_engineering.py     # 3 Tests: Zero temporal leakage, micro-mood velocity, cold-start fallback
+├── test_feature_engineering.py     # 3 Tests: Zero temporal leakage, micro-mood momentum, cold-start fallback
 ├── test_inference.py               # 3 Tests: Payload schema, probability bounds [0.0, 1.0], risk separation
 └── test_retrain_challenger.py      # 4 Tests: Retrain threshold trigger, force flag, promotion guardrail
 ```
@@ -278,20 +265,83 @@ Heavy datasets and serialized model files are version-controlled via DVC rather 
 
 ## <a id="ml-engineering-journey"></a>$\color{#F59E0B}{\text{The ML Engineering Journey}}$
 
-During model development in the research phase, critical machine learning challenges were systematically resolved:
+During model development in the research phase, critical machine learning challenges were systematically resolved across 11 empirical iterations:
 
 ```
-[Attempts 1–3] ──► [Attempt 4] ──────► [Attempt 5] ──────► [Attempt 6] ──────► [Attempt 7] ──────► [Attempt 8: CHAMPION]
-Leakage from      Random 80/20 Split  Chronological Split  Micro-Mood Baseline  19 Leak-Free Features  Hardware Optuna (RTX 3060)
-`sec_played`      0.95 ROC-AUC        Concept Drift        Threshold Tuning     70:30 Chrono Split     80% Precision SLA Guardrail
-(Identified &     (Lookahead Bias     (Skip rate dropped   (ROC-AUC: 0.824,     (ROC-AUC: 0.850,       (ROC-AUC: 0.858, Recall 47.7%,
- Dropped)          uncovered)          from 31% to 4%)      Recall 0.48)         Precision 0.77)        F1: 0.60, Threshold: 0.749)
+[Attempts 1–3] ──► [Attempt 4] ──────► [Attempt 5] ──────► [Attempt 6] ──────► [Attempt 7] ──────► [Attempt 8] ────────► [Attempt 9] ───────► [Attempt 10] ──────► [Attempt 11: CHAMPION]
+Leakage from      Random 80/20 Split  Chronological Split  Micro-Mood Baseline  19 Features (Untuned) Hardware Optuna (GPU) Custom Focal Loss    Multi-Model Ensemble  Leak-Free Champion
+`sec_played`      0.95 ROC-AUC        Concept Drift        Threshold Tuning     70:30 Chrono Split    80% Precision SLA     Noisy Label Trap     Dilution Effect       Pure Expanding Window
+(Identified &     (Lookahead Bias     (Skip rate dropped   (ROC-AUC: 0.824,     (ROC-AUC: 0.850,      (ROC-AUC: 0.857,      (Recall dropped to   (Recall dropped to    (ROC-AUC: 0.858,
+ Dropped)          uncovered)          from 31% to 4%)      Recall 0.48)         Precision 0.77)       Recall 47.4%)         46.1%, noisy data)   44.0%, diluted)       Recall 47.7%, Prec 80%)
 ```
 
-1. **$\color{#38BDF8}\text{Eliminating Lookahead Bias:}$** A standard random train/test split allowed future listening patterns to leak into the past. Moving to a strict **$\color{#38BDF8}\text{Chronological Forward Split}$** restored real-world evaluation integrity.
-2. **$\color{#38BDF8}\text{Defeating Concept Drift:}$** Listener habits changed drastically over the multi-year history. Restricting the training window to modern listening and engineering short-term **$\color{#38BDF8}\text{Micro-Mood}$** variables anchored ~60% of predictive power to immediate psychological context rather than stale historical preferences.
-3. **$\color{#38BDF8}\text{19-Feature Matrix Expansion:}$** Replaced 154 sparse genre columns with dynamic expanding genre risk averages and added acute momentum velocity (`skips_last_3m`, `consecutive_listens_streak`), boosting ROC-AUC to **$\color{#38BDF8}\text{0.850}$** without any hyperparameter tuning.
-4. **$\color{#38BDF8}\text{SLA-Constrained Bayesian Optimization (Champion Model):}$** Deployed 300-trial GPU-accelerated Optuna tuning on an NVIDIA RTX 3060 with an explicit **$\color{#38BDF8}\text{80 Percent Precision Business SLA}$**. Achieved **$\color{#38BDF8}\text{98.0 Percent overall accuracy}$**, **$\color{#38BDF8}\text{0.858 ROC-AUC}$**, **$\color{#38BDF8}\text{47.67 Percent safe recall}$**, and an all-time peak **$\color{#38BDF8}\text{F1-score of 0.60}$** (threshold: 0.749). Read the full experiment log in [`docs/ml/ML_PROGRESS_LOG.md`](docs/ml/ML_PROGRESS_LOG.md).
+- **$\color{#38BDF8}\text{Attempts 1–3 (Target Leakage & Class Imbalance):}$** `sec_played` leaked the label (early skip truncates duration). Dropping it collapsed recall to 0% because 90% of tracks were non-skips.
+- **$\color{#38BDF8}\text{Attempt 4 (Repeated Song Leakage):}$** Random 80/20 splitting allowed identical songs to appear in train and test sets, allowing the model to peek into future preferences and inflating ROC-AUC to 0.948.
+- **$\color{#38BDF8}\text{Attempt 5 (Concept Drift Discovery):}$** Moving to a strict chronological split exposed severe concept drift: the user's skip rate fell from 31% in 2021 to 4% in 2025. Static historical models failed completely.
+- **$\color{#38BDF8}\text{Attempt 6 (Windowing & Micro-Mood Engineering):}$** Restricting data to `year >= 2023` and engineering immediate state indicators (`seconds_since_last_skip`, `skips_last_15m`) established a clean baseline (ROC-AUC: 0.824).
+- **$\color{#38BDF8}\text{Attempt 7 (19-Feature Matrix Expansion):}$** Shifted to a 70:30 chronological split and added acute velocity (`skips_last_3m`, `consecutive_listens_streak`), boosting ROC-AUC to 0.850 and Precision to 77% without hyperparameter tuning.
+- **$\color{#38BDF8}\text{Attempt 8 (GPU Bayesian Optuna & 80% Precision SLA):}$** Deployed 300-trial Optuna tuning on an RTX 3060 with an 80% precision guardrail. Hit 98% accuracy, 0.857 ROC-AUC, 47.39% recall, and F1 of 0.60.
+- **$\color{#38BDF8}\text{Attempt 9 (Custom Focal Loss - Failed):}$** Implemented a custom gamma=2.0 focal loss to penalize hard false negatives. ROC-AUC reached 0.860, but recall dropped to 46.1% due to the **Noisy Label Trap** (model overfit to erratic, unpredictable accidental skips).
+- **$\color{#38BDF8}\text{Attempt 10 (Multi-Model Ensembling - Failed):}$** Evaluated stacking and soft voting across XGBoost, LightGBM, and CatBoost. Soft voting dropped ROC-AUC to 0.850 and recall to 44.0% due to the **Dilution Effect** (averaging a 300-trial tuned XGBoost with untuned default models).
+- **$\color{#38BDF8}\text{Attempt 11 (Expanding Window Leakage Fix - Production Champion):}$** Patched a subtle future-leakage in EDA artist skip rates by replacing global means with strictly causal `cumsum() / cumcount()` expanding windows. Re-ran Optuna to establish the absolute mathematical ceiling: **ROC-AUC: 0.858**, **Guaranteed Precision: 80.0%**, **Maximized Safe Recall: 47.67%**, and `scale_pos_weight: 12.05`.
+
+Read the full experimental dossier in [`docs/ml/ML_PROGRESS_LOG.md`](docs/ml/ML_PROGRESS_LOG.md).
+
+---
+
+## <a id="ai-agent-directive"></a>$\color{#F59E0B}{\text{AI Agent & IDE Directives}}$
+
+If you are an AI assistant, autonomous agent (Cursor, Windsurf, Claude, Copilot, Antigravity), or terminal CLI agent executing in this repository, you **MUST STRICTLY** adhere to these architectural rules:
+
+### **$\color{#38BDF8}\text{1. Dynamic Path Resolution (Never Hardcode)}$**
+- **Strict Prohibition:** NEVER use hardcoded paths (`C:/...` or `/home/...`) or brittle relative paths (`../../`).
+- **Required Utility:** Always import and resolve paths through `app/path_utils.py`:
+  ```python
+  from path_utils import find_project_root, resolve_path
+  PROJECT_ROOT = find_project_root(__file__)
+  MODEL_PATH = resolve_path("models/spotify_skip_predictor_xgb.pkl")
+  DB_PATH = resolve_path("data/processed/Engineered_Spotify_Portable.db")
+  ```
+
+### **$\color{#38BDF8}\text{2. Execution Pipeline Sequence}$**
+When executing the pipeline, always run scripts in strict chronological order:
+```bash
+# Step 1: Clean Raw JSON logs
+python app/pipeline/01_data_cleaning.py
+
+# Step 2: Generate EDA Report & Feature Store
+python app/pipeline/02_eda_visualizations.py
+
+# Step 3: Train Production XGBoost Champion Model
+python app/pipeline/03_ml_modeling.py
+
+# Step 4: Verify Live Shadow Audit Retrain Trigger
+python app/pipeline/04_retrain_trigger.py --threshold 100
+
+# Step 5: Challenger Model Promotion Evaluation
+python app/pipeline/05_challenger_evaluation.py
+
+# Step 6: A/B Financial Simulation Benchmark
+python app/pipeline/06_ab_testing_simulation.py
+```
+
+### **$\color{#38BDF8}\text{3. Mandatory Test Suite Verification}$**
+- Before proposing any commit or declaring a task complete, you must run the entire 20-test suite:
+  ```bash
+  python -m pytest app/tests/ -v
+  ```
+- All 20 tests must pass. Do not bypass the Git pre-commit hook (`.git/hooks/pre-commit`).
+- In CI environments where model binaries are tracked via DVC, model-dependent tests are skipped via `@requires_model` or `pytest.skip()`. Do not alter these skip markers to hard assertions.
+
+### **$\color{#38BDF8}\text{4. Binary & Data Leakage Prevention}$**
+- **Never Commit Heavy Files:** Raw `.db`, `.pkl`, `.7z`, and `.csv` files are ignored by Git.
+- **Track DVC Pointers:** When data or models change, use DVC and commit the resulting `.dvc` pointers:
+  ```bash
+  dvc add data/processed/Engineered_Spotify_Portable.db
+  dvc add models/spotify_skip_predictor_xgb.pkl
+  git add data/processed/*.dvc models/*.dvc
+  ```
+- **Scrub Research Notebooks:** All `.ipynb` notebooks in `app/notebooks/` must have execution counts and cell outputs cleared before committing to protect PII.
 
 ---
 
