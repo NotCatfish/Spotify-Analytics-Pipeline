@@ -1,7 +1,24 @@
 import pytest
 from unittest.mock import patch
+from pathlib import Path
+import sys
+
+APP_DIR = Path(__file__).resolve().parent.parent
+if str(APP_DIR) not in sys.path:
+    sys.path.insert(0, str(APP_DIR))
+from path_utils import resolve_path
+
+MODEL_PATH = resolve_path("models/spotify_skip_predictor_xgb.pkl")
+
+# --- Helper: detect if model exists (i.e. not a CI environment without DVC pull) ---
+_model_available = MODEL_PATH.exists()
+requires_model = pytest.mark.skipif(
+    not _model_available,
+    reason=f"Model artifact missing (DVC-tracked): {MODEL_PATH}"
+)
 
 
+@requires_model
 def test_healthcheck_endpoint(api_client):
     """
     Verifies that the GET /health endpoint returns HTTP 200 and healthy payload.
@@ -17,6 +34,7 @@ def test_healthcheck_endpoint(api_client):
 
 
 
+@requires_model
 def test_predict_skip_endpoint_success(api_client):
     """
     Verifies that POST /predict-skip returns valid SkipPredictionResponse JSON.
@@ -66,6 +84,7 @@ def test_predict_skip_validation_error(api_client):
     assert response.status_code == 422, f"Expected 422 validation error, got {response.status_code}"
 
 
+@requires_model
 @patch("main.get_live_spotify_data")
 @patch("main.get_lastfm_tags")
 def test_predict_live_queue_endpoint_mocked(mock_tags, mock_spotify, api_client):
@@ -94,3 +113,4 @@ def test_predict_live_queue_endpoint_mocked(mock_tags, mock_spotify, api_client)
     assert len(predictions) == 2
     assert predictions[0]["song_name"] == "Karma Police"
     assert 0.0 <= predictions[0]["skip_probability"] <= 1.0
+
