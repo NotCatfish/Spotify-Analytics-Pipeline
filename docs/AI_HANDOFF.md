@@ -56,6 +56,6 @@ Spotify-Analytics-Pipeline/
 ---
 
 ## 4. Current Work State & Immediate Next Steps
-- **State:** 24/7 cloud sync pipeline implemented and tested (24/24 tests passing). Zero-leakage chronological replay verified.
-- **Active Task:** User testing 5-minute cron sync on GitHub Actions using `SPOTIPY_REFRESH_TOKEN`.
-- **Next Planned Milestone:** Run one-time token generator (`python app/pipeline/get_refresh_token.py`), set GitHub Secrets, and trigger initial cloud sync.
+- **State:** 24/7 cloud sync pipeline is in active production on GitHub Actions running on a 1-hour cron schedule (`0 * * * *`). Real-world streaming logs are automatically evaluated with XGBoost and committed to `data/audit/shadow_audit.jsonl` with zero data leakage.
+- **Active Task:** Continuous 24/7 passive shadow evaluation running in the background.
+- **Next Planned Milestone:** Monitor shadow audit accuracy across the next 100-200 tracks; evaluate when to trigger challenger model retraining via `app/pipeline/04_retrain_trigger.py`.
