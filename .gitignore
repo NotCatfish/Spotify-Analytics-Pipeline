@@ -11,7 +11,10 @@ venv/
 mlruns/
 
 # Data & Model Binaries (Ignored by Git; tracked via DVC)
-data/
+data/*
+!data/audit/
+data/audit/*
+!data/audit/shadow_audit.jsonl
 !data/**/*.dvc
 !data/**/*.gitkeep
 models/

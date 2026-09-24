@@ -21,7 +21,7 @@ def get_spotify_oauth():
         client_id=os.getenv("SPOTIPY_CLIENT_ID"),
         client_secret=os.getenv("SPOTIPY_CLIENT_SECRET"),
         redirect_uri=os.getenv("SPOTIPY_REDIRECT_URI", "http://127.0.0.1:8000/callback"),
-        scope="user-read-playback-state user-read-currently-playing",
+        scope="user-read-playback-state user-read-currently-playing user-read-recently-played",
         cache_path=CACHE_PATH,
         open_browser=False,
         show_dialog=True

@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [1.3.0] - 2026-09-24: 24/7 Cloud Listening Sync & Automated Shadow Audit
+
+### Added
+- **Headless Cloud Listening Sync Engine (`app/pipeline/07_cloud_listening_sync.py`):** Automatically polls Spotify's Recently Played API, replays listening sessions in strict causal sequence with zero lookahead bias, executes XGBoost skip inference, and logs real-world ground truth outcomes.
+- **Dual Audit Logging:** Persists evaluations both to the local SQLite database (`data/audit/production_audit.db`) and a lightweight, Git-tracked append-only log (`data/audit/shadow_audit.jsonl`).
+- **Automated GitHub Actions Cron Workflow (`.github/workflows/spotify_sync.yml`):** Runs every 5 minutes in test mode (with `workflow_dispatch` manual trigger), safely injecting encrypted secrets (`SPOTIPY_CLIENT_ID`, `SPOTIPY_CLIENT_SECRET`, `SPOTIPY_REFRESH_TOKEN`), and auto-committing new listening records back to the repo with `[skip ci]`.
+- **One-Time Token Generator (`app/pipeline/get_refresh_token.py`):** Interactive local OAuth helper to grant `user-read-recently-played` scope and retrieve a permanent headless refresh token.
+- **Sync Test Suite (`app/tests/test_cloud_sync.py`):** 4 automated Pytest tests validating session replay momentum, zero-leakage skip resolution, database migration, and credential error handling (bringing total test coverage to 24 passing suites).
+
+### Changed
+- **Spotify Scope Expansion (`app/api/spotify_client.py`):** Expanded OAuth scopes to include `user-read-recently-played`.
+- **Git Tracking Rules (`.gitignore`):** Whitelisted `!data/audit/shadow_audit.jsonl` while maintaining complete privacy for `.env`, credentials, and raw binaries.
+
+---
+
 ## [1.2.0] - 2026-09-19: Production Hardening, DVC Integration & CI/CD Pipeline
 
 ### Added
