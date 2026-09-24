@@ -408,11 +408,30 @@ JSONL_PATH = resolve_path("data/audit/shadow_audit.jsonl")
 def save_evaluated_records_to_db(records: List[Dict]) -> Tuple[int, int]:
     """
     Saves records to SQLite shadow_audit table, ignoring duplicate played_at timestamps.
-    Also appends new unique records to data/audit/shadow_audit.jsonl for clean Git commits.
+    Guarantees zero duplicates on stateless GitHub runners by checking existing timestamps
+    in data/audit/shadow_audit.jsonl.
     Returns (inserted_count, skipped_duplicates_count).
     """
     if not records:
         return 0, 0
+
+    # 1. Load existing timestamps from shadow_audit.jsonl (stateless runner guard)
+    existing_timestamps = set()
+    if JSONL_PATH.exists():
+        import json
+        try:
+            with open(JSONL_PATH, "r", encoding="utf-8") as f:
+                for line in f:
+                    line_str = line.strip()
+                    if line_str:
+                        try:
+                            obj = json.loads(line_str)
+                            if "spotify_played_at" in obj:
+                                existing_timestamps.add(obj["spotify_played_at"])
+                        except Exception:
+                            pass
+        except Exception as e:
+            print(f"[WARNING] Could not read existing timestamps from JSONL: {e}")
 
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH, timeout=15.0)
@@ -424,6 +443,10 @@ def save_evaluated_records_to_db(records: List[Dict]) -> Tuple[int, int]:
     new_records = []
 
     for r in records:
+        # Prevent duplicates across overlapping cron runs
+        if r["spotify_played_at"] in existing_timestamps:
+            duplicates += 1
+            continue
         try:
             cursor.execute("""
                 INSERT INTO shadow_audit (

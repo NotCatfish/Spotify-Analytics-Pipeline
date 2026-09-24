@@ -132,7 +132,9 @@ def test_db_migration_and_idempotent_sync(tmp_path, monkeypatch):
     and prevents duplicate insertions across multiple sync runs.
     """
     test_db = tmp_path / "test_production_audit.db"
+    test_jsonl = tmp_path / "test_shadow_audit.jsonl"
     monkeypatch.setattr(cloud_sync, "DB_PATH", test_db)
+    monkeypatch.setattr(cloud_sync, "JSONL_PATH", test_jsonl)
 
     dummy_records = [
         {
