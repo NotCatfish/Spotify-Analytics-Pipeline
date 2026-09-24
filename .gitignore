@@ -17,9 +17,10 @@ data/audit/*
 !data/audit/shadow_audit.jsonl
 !data/**/*.dvc
 !data/**/*.gitkeep
-models/
+models/*
 !models/**/*.dvc
 !models/**/*.gitkeep
+!models/spotify_skip_predictor_xgb.pkl
 *.csv
 *.json
 *.db
@@ -27,6 +28,7 @@ models/
 *.sqlite3
 *.parquet
 *.pkl
+!models/spotify_skip_predictor_xgb.pkl
 *.joblib
 *.h5
 *.pt
