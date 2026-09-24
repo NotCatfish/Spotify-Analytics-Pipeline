@@ -17,8 +17,10 @@ An enterprise-grade, end-to-end Python data engineering, automated exploratory d
 - **$\color{#38BDF8}\text{Zero Temporal Data Leakage:}$** Strict **$\color{#38BDF8}\text{chronological walk-forward split}$** (2023–2024 train, 2025+ test) with dynamic expanding window target encoding and acute micro-mood momentum tracking.
 - **$\color{#38BDF8}\text{Real-Time Serving, Web Dashboard and Docker:}$** Production FastAPI microservice with dynamic In-Memory Feature Store (<0.2s startup), Spotify OAuth integration, Last.fm live genre enrichment, real-time dark-mode HTML dashboard (`/dashboard`), passive Shadow Audit logging (`audit_logger.py`), and multi-stage containerization (`Dockerfile`, `docker-compose.yml`).
 - **$\color{#38BDF8}\text{Dual-Policy Action Engine:}$** Live skip probabilities dispatch actionable operational policies in real time: CDN bandwidth throttling (`JIT_3SEC_CHUNKING` to eliminate wasted 30s pre-fetch bandwidth) and Recommender queue management (`SILENT_AUTOPLAY_PURGE`).
-- **$\color{#38BDF8}\text{Full Test Suite and Automated CI/CD Quality Gates:}$** 20 automated Pytest unit and integration tests across 6 dedicated test modules, backed by a local Git `pre-commit` hook and cloud GitHub Actions CI runner.
+- **$\color{#38BDF8}\text{24/7 Cloud Listening Sync and Autonomous Model Audit:}$** Serverless GitHub Actions cron runner (`0 * * * *`) pulling live playback history via headless Spotify OAuth, causally replaying listening sessions with zero lookahead bias, executing live XGBoost inferences, and auto-committing verifiable audit logs (`shadow_audit.jsonl`) back to Git with `[skip ci]`.
+- **$\color{#38BDF8}\text{Full Test Suite and Automated CI/CD Quality Gates:}$** 24 automated Pytest unit and integration tests across 7 dedicated test modules, backed by a local Git `pre-commit` hook and cloud GitHub Actions CI runner.
 - **$\color{#38BDF8}\text{Data Version Control (DVC):}$** Large datasets and model binaries tracked via lightweight `.dvc` pointers to prevent Git repository bloat while ensuring mathematical reproducibility.
+
 
 ---
 
@@ -31,6 +33,7 @@ An enterprise-grade, end-to-end Python data engineering, automated exploratory d
 - [FastAPI Microservice &amp; Web Dashboard](#fastapi-microservice--web-dashboard)
 - [Testing &amp; CI/CD Pipeline](#testing--cicd-pipeline)
 - [Data Version Control (DVC)](#data-version-control-dvc)
+- [24/7 Cloud Listening Sync &amp; Autonomous Model Audit](#cloud-sync)
 - [The ML Engineering Journey](#ml-engineering-journey)
 - [AI Agent &amp; IDE Directives](#ai-agent-directive)
 - [Obtaining Your Spotify Data](#obtaining-your-spotify-data)
@@ -38,6 +41,7 @@ An enterprise-grade, end-to-end Python data engineering, automated exploratory d
 - [Research Notebooks](#research-notebooks)
 - [Author &amp; Connect](#author--connect)
 - [License](#license)
+
 
 ---
 
@@ -56,7 +60,7 @@ flowchart TD
     D --> F[("Engineered Feature Store<br/>Engineered_Spotify_Portable.db")]:::storageBox
   
     F --> G["app/pipeline/03_ml_modeling.py<br/>(Chrono Split, 19 Features, GPU Optuna)"]:::darkBox
-    G --> H["models/spotify_skip_predictor_xgb.pkl<br/>(Tracked via DVC)"]:::darkBox
+    G --> H["models/spotify_skip_predictor_xgb.pkl<br/>(Tracked via Git / DVC)"]:::darkBox
     G --> I[("MLflow Tracking")]:::storageBox
 
     F --> J["app/pipeline/04_retrain_trigger.py<br/>(Retraining Feedback Loop)"]:::darkBox
@@ -69,6 +73,12 @@ flowchart TD
     N --> O["REST Endpoints<br/>(/predict-skip, /predict/live-queue, /health)"]:::darkBox
     N --> P["Web Dashboard<br/>(/dashboard - Live Queue & Audit UI)"]:::darkBox
     O --> Q[("data/audit/production_audit.db<br/>(Shadow Ground-Truth Evaluator)")]:::storageBox
+
+    R["Spotify Web API<br/>(Recently Played Stream)"]:::darkBox --> S[".github/workflows/spotify_sync.yml<br/>(Hourly GitHub Actions Runner)"]:::darkBox
+    S --> T["app/pipeline/07_cloud_listening_sync.py<br/>(Headless Causal Replay & XGBoost)"]:::darkBox
+    H --> T
+    T --> Q
+    T --> U[("data/audit/shadow_audit.jsonl<br/>(Git-Tracked Immutable Log)")]:::storageBox
 ```
 
 ---
@@ -79,7 +89,8 @@ flowchart TD
 Spotify-Analytics-Pipeline/
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                        # GitHub Actions CI/CD Pipeline
+│       ├── ci.yml                        # GitHub Actions CI/CD Pipeline (flake8 + pytest)
+│       └── spotify_sync.yml              # 24/7 Cloud Listening Sync & Model Audit (hourly cron)
 ├── app/
 │   ├── api/                              # Production FastAPI Microservice
 │   │   ├── static/
@@ -97,11 +108,14 @@ Spotify-Analytics-Pipeline/
 │   │   ├── 03_ml_modeling.py             # Production model trainer & serializer
 │   │   ├── 04_retrain_trigger.py         # Feedback threshold retraining daemon
 │   │   ├── 05_challenger_evaluation.py   # Guardrail evaluation & model promotion
-│   │   └── 06_ab_testing_simulation.py   # Financial utility A/B simulation engine
-│   ├── tests/                            # Automated Pytest Suite (20 Tests)
+│   │   ├── 06_ab_testing_simulation.py   # Financial utility A/B simulation engine
+│   │   ├── 07_cloud_listening_sync.py    # 24/7 Headless cloud sync & causal replay
+│   │   └── get_refresh_token.py          # Interactive OAuth token generator
+│   ├── tests/                            # Automated Pytest Suite (24 Tests across 7 suites)
 │   │   ├── conftest.py                   # Shared session fixtures & path injection
 │   │   ├── test_ab_simulation.py         # A/B utility & net savings logic tests
 │   │   ├── test_api.py                   # FastAPI endpoint validation & mock tests
+│   │   ├── test_cloud_sync.py            # Headless session momentum, replay & sync tests
 │   │   ├── test_dvc_tracking.py          # DVC pointer & hash integrity tests
 │   │   ├── test_feature_engineering.py   # Zero-leakage & micro-mood momentum tests
 │   │   ├── test_inference.py             # Model structure & inference boundary tests
@@ -110,17 +124,18 @@ Spotify-Analytics-Pipeline/
 ├── data/
 │   ├── raw/                              # Unpacked Spotify Extended Streaming JSONs
 │   ├── processed/                        # Cleaned & Engineered SQLite databases (.dvc)
-│   └── audit/                            # Live Shadow Mode SQLite audit database
+│   └── audit/                            # Production SQLite DB & Git-tracked shadow_audit.jsonl
 ├── docs/                                 # Architectural documentation & dossiers
 │   ├── ab_testing/                       # A/B testing simulation reports
 │   ├── eda/                              # Mathematical derivations & EDA blueprints
 │   ├── ml/                               # ML experimentation logs & Optuna records
 │   ├── reports/                          # Generated markdown reports & figures
 │   ├── setup/                            # Deployment, Last.fm & environment guides
+│   ├── system_docs/                      # AI handoffs, system roadmaps & historical logs
 │   ├── AI_HANDOFF.md                     # Agent context snapshot & handoff protocol
 │   ├── CHANGELOG.md                      # Chronological version changelog
 │   └── ROADMAP.md                        # Strategic project roadmap & milestones
-├── models/                               # Serialized XGBoost model artifacts (.dvc)
+├── models/                               # Serialized XGBoost model artifacts
 ├── Dockerfile                            # Multi-stage production container specification
 ├── docker-compose.yml                    # Multi-container orchestration (API + UI)
 ├── pytest.ini                            # Pytest configuration & warnings filters
@@ -191,6 +206,14 @@ Spotify-Analytics-Pipeline/
 - Proves that the Champion's high-precision strategy maximizes dollar savings by avoiding catastrophic False Positive user penalties ($0.05 per user disruption).
 - Logs versioned benchmark audits directly into [`docs/ab_testing/AB_TESTING_RESULTS.md`](docs/ab_testing/AB_TESTING_RESULTS.md).
 
+### **$\color{#38BDF8}\text{7.}$** [`app/pipeline/07_cloud_listening_sync.py`](app/pipeline/07_cloud_listening_sync.py) **$\color{#38BDF8}\text{(24/7 Cloud Listening Sync & Autonomous Model Audit)}$**
+
+- Headless Spotify OAuth ingestion running hourly via GitHub Actions cron (`0 * * * *`).
+- Replays chronological listening sessions in strict causal sequence with zero lookahead bias.
+- Resolves true user skips via subsequent track timestamps (`progress < duration - 10s`) and evaluates predictions against the XGBoost model.
+- Persists audit logs to local SQLite (`data/audit/production_audit.db`) and auto-commits to Git-tracked JSON Lines (`data/audit/shadow_audit.jsonl`) with `[skip ci]`.
+- Implements in-memory deduplication guaranteeing idempotency across ephemeral stateless cloud runners.
+
 ---
 
 ## <a id="fastapi-microservice--web-dashboard"></a>$\color{#F59E0B}{\text{FastAPI Microservice and Web Dashboard}}$
@@ -228,7 +251,7 @@ Access `http://localhost:8000/dashboard` in your browser to view:
 
 ## <a id="testing--cicd-pipeline"></a>$\color{#F59E0B}{\text{Testing and CI/CD Pipeline}}$
 
-A comprehensive test suite of **20 unit and integration tests** guarantees zero regressions across the codebase:
+A comprehensive test suite of **24 unit and integration tests across 7 suites** guarantees zero regressions across the codebase:
 
 ```bash
 python -m pytest app/tests/ -v
@@ -240,6 +263,7 @@ python -m pytest app/tests/ -v
 app/tests/
 ├── test_ab_simulation.py           # 3 Tests: Artifact presence, utility formula, champion dominance
 ├── test_api.py                     # 4 Tests: /health check, /predict-skip success & 422, mocked live queue
+├── test_cloud_sync.py              # 4 Tests: Session momentum, zero-leakage skip resolution, DB migration, error handling
 ├── test_dvc_tracking.py            # 3 Tests: .dvc pointer presence, YAML md5 validity, size < 500B
 ├── test_feature_engineering.py     # 3 Tests: Zero temporal leakage, micro-mood momentum, cold-start fallback
 ├── test_inference.py               # 3 Tests: Payload schema, probability bounds [0.0, 1.0], risk separation
@@ -259,7 +283,7 @@ app/tests/
 
 ### **$\color{#38BDF8}\text{Local Pre-Commit Hook}$**
 
-A Git pre-commit hook in `.git/hooks/pre-commit` mandates that all 20 tests pass locally before any commit can be finalized, preventing broken code from ever reaching version control.
+A Git pre-commit hook in `.git/hooks/pre-commit` mandates that all 24 tests pass locally before any commit can be finalized, preventing broken code from ever reaching version control.
 
 ---
 
@@ -341,15 +365,18 @@ python app/pipeline/05_challenger_evaluation.py
 
 # Step 6: A/B Financial Simulation Benchmark
 python app/pipeline/06_ab_testing_simulation.py
+
+# Step 7: 24/7 Headless Cloud Listening Sync & Model Audit
+python app/pipeline/07_cloud_listening_sync.py --hours 3 --limit 50
 ```
 
 ### **$\color{#38BDF8}\text{3. Mandatory Test Suite Verification}$**
 
-- Before proposing any commit or declaring a task complete, you must run the entire 20-test suite:
+- Before proposing any commit or declaring a task complete, you must run the entire 24-test suite:
   ```bash
   python -m pytest app/tests/ -v
   ```
-- All 20 tests must pass. Do not bypass the Git pre-commit hook (`.git/hooks/pre-commit`).
+- All 24 tests must pass. Do not bypass the Git pre-commit hook (`.git/hooks/pre-commit`).
 - In CI environments where model binaries are tracked via DVC, model-dependent tests are skipped via `@requires_model` or `pytest.skip()`. Do not alter these skip markers to hard assertions.
 
 ### **$\color{#38BDF8}\text{4. Binary and Data Leakage Prevention}$**
@@ -358,10 +385,42 @@ python app/pipeline/06_ab_testing_simulation.py
 - **$\color{#38BDF8}\text{Track DVC Pointers:}$** When data or models change, use DVC and commit the resulting `.dvc` pointers:
   ```bash
   dvc add data/processed/Engineered_Spotify_Portable.db
-  dvc add models/spotify_skip_predictor_xgb.pkl
-  git add data/processed/*.dvc models/*.dvc
+  git add data/processed/*.dvc
   ```
 - **$\color{#38BDF8}\text{Scrub Research Notebooks:}$** All `.ipynb` notebooks in `app/notebooks/` must have execution counts and cell outputs cleared before committing to protect PII.
+
+---
+
+## <a id="cloud-sync"></a>$\color{#F59E0B}{\text{24/7 Cloud Listening Sync and Autonomous Model Audit}}$
+
+### **$\color{#38BDF8}\text{AWS Decommissioning: Why We Replaced EC2}$**
+Earlier architecture blueprints planned to host the streaming microservice inside an AWS EC2 `t3.micro` Ubuntu virtual machine. During testing, this approach revealed critical operational liabilities:
+1. **Billing & Credit Card Risk:** Continuous 24/7 cloud instances risk sudden unexpected egress charges or free-tier expiration.
+2. **Account Suspension Vulnerability:** AWS accounts frequently suffer automated fraud holds or quota lockouts, abruptly killing server uptime.
+3. **SSO Token Expiration:** AWS CLI/SSO credentials expire after 12 hours, breaking long-running headless terminal synchronization.
+4. **Compute Inefficiency:** Paying for an idle virtual server running 24/7 just to evaluate a track once every few minutes is economically wasteful.
+
+### **$\color{#38BDF8}\text{The Superior Alternative: Serverless GitHub Actions Cron}$**
+Instead of maintaining expensive cloud servers, we engineered a completely headless, zero-cost, serverless architecture using **GitHub Actions**:
+- **100% Free & Unlimited:** Public GitHub repositories receive unlimited GitHub Actions runner minutes.
+- **Native Python & XGBoost Runtime:** Full Ubuntu 22.04 runner equipped with Python 3.11, pip caching, and pre-compiled C++ libraries for native XGBoost inference.
+- **Automated POSIX Cron:** Executes hourly (`0 * * * *`) via `.github/workflows/spotify_sync.yml` with manual `workflow_dispatch` fallback.
+- **Headless OAuth:** Uses a permanent `SPOTIPY_REFRESH_TOKEN` with `user-read-recently-played` scope—zero browser interaction required.
+- **Git-Native Persistence:** The runner appends newly resolved track decisions to [`data/audit/shadow_audit.jsonl`](data/audit/shadow_audit.jsonl) and auto-commits directly to the repository using `github-actions[bot]` with `[skip ci]`.
+
+### **$\color{#38BDF8}\text{Strict Causal Session Replay (Zero Lookahead Bias)}$**
+To eliminate temporal data leakage during batch synchronization:
+1. Songs are sorted chronologically.
+2. Micro-mood momentum (`skips_last_3m`, `consecutive_listens_streak`) is calculated strictly from songs played *before* the current song's start time (`played_at < current_start`).
+3. The *subsequent* song's timestamp determines actual listening duration:
+   $$
+   \text{actual\_played\_sec} = \min(\text{next\_start} - \text{current\_start}, \text{total\_duration})
+   $$
+4. Ground-truth skip is labeled using the `duration - 10s` rule: if the user abandoned the track before the final 10-second outro, `actual_skipped = 1`.
+5. Predictions are graded into `TRUE_POSITIVE`, `TRUE_NEGATIVE`, `FALSE_POSITIVE`, or `FALSE_NEGATIVE` and stored with CDN bandwidth conserved.
+
+### **$\color{#38BDF8}\text{Stateless Runner Deduplication}$**
+Because GitHub Actions runners are ephemeral, the engine builds an in-memory set of all previously committed `(played_at, track_id)` tuples directly from `shadow_audit.jsonl` upon startup. Overlapping polling windows (e.g. looking back 3 hours) are completely deduplicated, ensuring 100% idempotent commits.
 
 ---
 
@@ -408,7 +467,13 @@ Create a `.env` file in the project root:
 SPOTIPY_CLIENT_ID="your_spotify_client_id"
 SPOTIPY_CLIENT_SECRET="your_spotify_client_secret"
 SPOTIPY_REDIRECT_URI="http://localhost:8000/callback"
+SPOTIPY_REFRESH_TOKEN="your_permanent_headless_refresh_token"
 LASTFM_API_KEY="your_lastfm_api_key"
+```
+
+To generate your headless `SPOTIPY_REFRESH_TOKEN` for 24/7 cloud sync:
+```bash
+python app/pipeline/get_refresh_token.py
 ```
 
 ### **$\color{#38BDF8}\text{3. Running the Pipeline End-to-End}$**
@@ -431,6 +496,11 @@ python app/pipeline/05_challenger_evaluation.py
 
 # Step 6: A/B Financial Simulation Benchmark
 python app/pipeline/06_ab_testing_simulation.py
+
+# Step 7: Headless Cloud Listening Sync & Model Audit
+python app/pipeline/07_cloud_listening_sync.py --hours 3 --limit 50
+```
+
 ```
 
 ### **$\color{#38BDF8}\text{4. Running the Microservice and Web Dashboard}$**
