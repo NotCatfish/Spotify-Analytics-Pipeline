@@ -2,8 +2,8 @@ name: Spotify 24/7 Cloud Listening Sync & Audit
 
 on:
   schedule:
-    # Runs every 5 minutes (user test mode). Note: GitHub may delay by a few minutes during peak queue loads.
-    - cron: '*/5 * * * *'
+    # Set to every minute (Note: GitHub Actions enforces a strict 5-minute minimum clamp on cron schedules)
+    - cron: '* * * * *'
   workflow_dispatch: # Allows manual on-demand execution with a single click in GitHub Actions UI
 
 permissions:
