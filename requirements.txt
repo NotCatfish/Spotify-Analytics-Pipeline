@@ -16,3 +16,5 @@ kaleido
 pytest
 httpx
 mlflow
+spotipy
+requests
