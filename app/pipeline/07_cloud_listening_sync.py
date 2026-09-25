@@ -522,9 +522,10 @@ def main():
     args = parser.parse_args()
 
     print("=" * 76)
-    print("[*] SPOTIFY CLOUD LISTENING SYNC & SHADOW EVALUATION ENGINE")
-    print(f"  Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Target: Past {args.hours} hour(s)")
+    target_desc = "All recent available (up to limit)" if args.hours == 0 else f"Past {args.hours} hour(s)"
+    print(f"  Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Target: {target_desc}")
     print("=" * 76)
+
 
     try:
         sp = get_headless_spotify_client()

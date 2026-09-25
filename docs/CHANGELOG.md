@@ -11,14 +11,15 @@ All notable changes to this project are documented in this file.
 - **Alternative Selection Rationale:** Evaluated Vercel/Serverless functions (rejected due to 10s execution limits and lack of daemon/cron support) and Supabase Edge Functions (rejected due to TypeScript/Deno runtime unable to execute Python/XGBoost). Selected **GitHub Actions** as the superior architecture:
   1. 100% free and unlimited for public repositories.
   2. Full Python 3.11 environment capable of running compiled C++ XGBoost binaries.
-  3. Native POSIX cron scheduling (`0 * * * *` hourly sync).
+  3. Native POSIX cron scheduling (`14,47 * * * *` twice hourly off-peak sync).
   4. Native GitHub Encrypted Secrets injection for credentials.
   5. Built-in Git version control acting as an immutable, transparent data store (`data/audit/shadow_audit.jsonl`) committed via bot with `[skip ci]`.
 
 ### Added
 - **Headless Cloud Listening Sync Engine (`app/pipeline/07_cloud_listening_sync.py`):** Automatically polls Spotify's Recently Played API, replays listening sessions in strict causal sequence with zero lookahead bias, executes XGBoost skip inference, and logs real-world ground truth outcomes.
 - **Dual Audit Logging:** Persists evaluations both to the local SQLite database (`data/audit/production_audit.db`) and a lightweight, Git-tracked append-only log (`data/audit/shadow_audit.jsonl`).
-- **Automated GitHub Actions Cron Workflow (`.github/workflows/spotify_sync.yml`):** Runs hourly (`0 * * * *`) with `workflow_dispatch` manual trigger, safely injecting encrypted secrets (`SPOTIPY_CLIENT_ID`, `SPOTIPY_CLIENT_SECRET`, `SPOTIPY_REFRESH_TOKEN`), and auto-committing new listening records back to the repo with `[skip ci]`.
+- **Automated GitHub Actions Cron Workflow (`.github/workflows/spotify_sync.yml`):** Runs twice hourly at off-peak minutes (`14,47 * * * *`) with `workflow_dispatch` manual trigger and `--hours 0` full-window sync, safely injecting encrypted secrets (`SPOTIPY_CLIENT_ID`, `SPOTIPY_CLIENT_SECRET`, `SPOTIPY_REFRESH_TOKEN`), and auto-committing new listening records back to the repo with `[skip ci]`.
+
 - **One-Time Token Generator (`app/pipeline/get_refresh_token.py`):** Interactive local OAuth helper to grant `user-read-recently-played` scope and retrieve a permanent headless refresh token.
 - **Sync Test Suite (`app/tests/test_cloud_sync.py`):** 4 automated Pytest tests validating session replay momentum, zero-leakage skip resolution, database migration, and credential error handling (bringing total test coverage to 24 passing suites).
 

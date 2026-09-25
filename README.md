@@ -17,7 +17,8 @@ An enterprise-grade, end-to-end Python data engineering, automated exploratory d
 - **$\color{#38BDF8}\text{Zero Temporal Data Leakage:}$** Strict **$\color{#38BDF8}\text{chronological walk-forward split}$** (2023–2024 train, 2025+ test) with dynamic expanding window target encoding and acute micro-mood momentum tracking.
 - **$\color{#38BDF8}\text{Real-Time Serving, Web Dashboard and Docker:}$** Production FastAPI microservice with dynamic In-Memory Feature Store (<0.2s startup), Spotify OAuth integration, Last.fm live genre enrichment, real-time dark-mode HTML dashboard (`/dashboard`), passive Shadow Audit logging (`audit_logger.py`), and multi-stage containerization (`Dockerfile`, `docker-compose.yml`).
 - **$\color{#38BDF8}\text{Dual-Policy Action Engine:}$** Live skip probabilities dispatch actionable operational policies in real time: CDN bandwidth throttling (`JIT_3SEC_CHUNKING` to eliminate wasted 30s pre-fetch bandwidth) and Recommender queue management (`SILENT_AUTOPLAY_PURGE`).
-- **$\color{#38BDF8}\text{24/7 Cloud Listening Sync and Autonomous Model Audit:}$** Serverless GitHub Actions cron runner (`0 * * * *`) pulling live playback history via headless Spotify OAuth, causally replaying listening sessions with zero lookahead bias, executing live XGBoost inferences, and auto-committing verifiable audit logs (`shadow_audit.jsonl`) back to Git with `[skip ci]`.
+- **$\color{#38BDF8}\text{24/7 Cloud Listening Sync and Autonomous Model Audit:}$** Serverless GitHub Actions off-peak cron runner (`14,47 * * * *`) pulling live playback history via headless Spotify OAuth, causally replaying listening sessions with zero lookahead bias, executing live XGBoost inferences, and auto-committing verifiable audit logs (`shadow_audit.jsonl`) back to Git with `[skip ci]`.
+
 - **$\color{#38BDF8}\text{Full Test Suite and Automated CI/CD Quality Gates:}$** 24 automated Pytest unit and integration tests across 7 dedicated test modules, backed by a local Git `pre-commit` hook and cloud GitHub Actions CI runner.
 - **$\color{#38BDF8}\text{Data Version Control (DVC):}$** Large datasets and model binaries tracked via lightweight `.dvc` pointers to prevent Git repository bloat while ensuring mathematical reproducibility.
 
@@ -208,7 +209,8 @@ Spotify-Analytics-Pipeline/
 
 ### **$\color{#38BDF8}\text{7.}$** [`app/pipeline/07_cloud_listening_sync.py`](app/pipeline/07_cloud_listening_sync.py) **$\color{#38BDF8}\text{(24/7 Cloud Listening Sync & Autonomous Model Audit)}$**
 
-- Headless Spotify OAuth ingestion running hourly via GitHub Actions cron (`0 * * * *`).
+- Headless Spotify OAuth ingestion running twice hourly via GitHub Actions off-peak cron (`14,47 * * * *`).
+
 - Replays chronological listening sessions in strict causal sequence with zero lookahead bias.
 - Resolves true user skips via subsequent track timestamps (`progress < duration - 10s`) and evaluates predictions against the XGBoost model.
 - Persists audit logs to local SQLite (`data/audit/production_audit.db`) and auto-commits to Git-tracked JSON Lines (`data/audit/shadow_audit.jsonl`) with `[skip ci]`.
@@ -404,7 +406,8 @@ Earlier architecture blueprints planned to host the streaming microservice insid
 Instead of maintaining expensive cloud servers, we engineered a completely headless, zero-cost, serverless architecture using **GitHub Actions**:
 - **100% Free & Unlimited:** Public GitHub repositories receive unlimited GitHub Actions runner minutes.
 - **Native Python & XGBoost Runtime:** Full Ubuntu 22.04 runner equipped with Python 3.11, pip caching, and pre-compiled C++ libraries for native XGBoost inference.
-- **Automated POSIX Cron:** Executes hourly (`0 * * * *`) via `.github/workflows/spotify_sync.yml` with manual `workflow_dispatch` fallback.
+- **Automated POSIX Cron:** Executes twice hourly at off-peak minutes (`14,47 * * * *`) via `.github/workflows/spotify_sync.yml` with manual `workflow_dispatch` fallback.
+
 - **Headless OAuth:** Uses a permanent `SPOTIPY_REFRESH_TOKEN` with `user-read-recently-played` scope—zero browser interaction required.
 - **Git-Native Persistence:** The runner appends newly resolved track decisions to [`data/audit/shadow_audit.jsonl`](data/audit/shadow_audit.jsonl) and auto-commits directly to the repository using `github-actions[bot]` with `[skip ci]`.
 
