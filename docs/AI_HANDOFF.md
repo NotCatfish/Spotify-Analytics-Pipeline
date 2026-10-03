@@ -48,7 +48,7 @@ Spotify-Analytics-Pipeline/
   - **Zero Cost & Zero Maintenance:** 100% free runner tier on public GitHub repositories with zero server maintenance.
   - **Execution Engine:** `.github/workflows/spotify_sync.yml` triggers twice every hour (`14,47 * * * *`) via off-peak POSIX cron + manual `workflow_dispatch`.
   - **Autonomous Daily Retraining:** `.github/workflows/model_retrain.yml` triggers daily at 00:00 UTC with automated 37-minute retries (`0,37 * * * *`) backed by persistent state flag `data/audit/retrain_status.json`.
-  - **Causal Session Replay:** `app/pipeline/07_cloud_listening_sync.py` pulls recently played tracks, calculates past session momentum strictly before prediction time, resolves actual skip outcomes via subsequent track timestamps (`duration - 10s`), and logs predictions.
+  - **Causal Session Replay:** `app/pipeline/07_cloud_listening_sync.py` pulls recently played tracks, calculates past session momentum strictly before prediction time, resolves actual skip outcomes via elapsed playback time (`elapsed = t[i] - t[i-1] < duration - 10s`), and logs predictions.
   - **Stateless Deduplication:** Since cloud runners are ephemeral and do not retain SQLite state, the runner deduplicates incoming tracks against `data/audit/shadow_audit.jsonl` in-memory.
   - **Git-Native Storage:** Results and updated model binaries are auto-committed by `github-actions[bot]` with `[skip ci]` directly into Git, creating a verifiable public audit trail.
 
@@ -71,7 +71,7 @@ Spotify-Analytics-Pipeline/
 ---
 
 ## 5. Current Work State & Immediate Next Steps
-- **State:** Autonomous daily MLOps retraining loop is live on GitHub Actions (`.github/workflows/model_retrain.yml`). First live cloud retrain (commit `d1f406b`) successfully executed on 127,373 combined samples (126,800 modern baseline Parquet + 573 live stream records), achieving ROC-AUC of 0.9381, Precision of 0.8000, and Recall of 0.6906 at SLA decision threshold 0.7715. Status flag (`data/audit/retrain_status.json`) is marked `SUCCESS` for 2026-10-03.
+- **State:** Fixed Spotify `played_at` timestamp resolution bug in `app/pipeline/07_cloud_listening_sync.py` by switching from forward-looking delta to strictly backward-looking delta (`t[i] - t[i-1]`). Re-graded all 573 audit records (12 true skips, 561 non-skips). All 24 automated unit tests pass.
 - **Active Phase:** Phase 8 (Drift Alerting & Production Serving Hardening).
 - **Next Planned Milestone:** Implement automated webhook/issue alerting if weekly skip precision slips below the 78% business guardrail; benchmark FastAPI `/predict_skip` latency under high-concurrency batch loads.
 

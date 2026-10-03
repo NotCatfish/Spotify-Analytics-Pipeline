@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [1.5.1] - 2026-10-03: Causal Ground-Truth Skip Resolution & Session Momentum Fix
+
+### Fixed
+- **Ground-Truth Skip Resolution Bug (`app/pipeline/07_cloud_listening_sync.py`):** Fixed fundamental timestamp calculation error in Spotify recently-played history. In Spotify's API, `played_at` corresponds to the end time of track playback. The pipeline previously computed `t[i+1] - t[i]`, erroneously checking Track $i+1$'s playtime against Track $i$'s duration. This created 202 artificial "fake" skips whenever the next track was shorter. Replaced with strictly causal backward-looking playback delta: `elapsed_sec = t[i] - t[i-1]`.
+- **Stateless Serverless Feature Lookup:** Updated `07_cloud_listening_sync.py` to prioritize `data/processed/feature_store_lookup.json` (3,019 artists, 12,056 songs) instead of requiring local DVC-tracked SQLite database `Engineered_Spotify_Portable.db`, ensuring serverless GitHub Actions runners accurately calculate Bayes skip rates.
+- **Unit Test Causal Realignment (`app/tests/test_cloud_sync.py`):** Realiged `test_replay_session_skip_detection_and_momentum` to assert strictly causal start-to-finish track duration and ground-truth skip detection.
+- **Audit Data Re-Grading:** Re-graded all 573 records across `data/audit/shadow_audit.jsonl`, `data/audit/production_audit.db`, and `data/processed/Live_Streaming_Audit_Portable.db`. Corrected actual skips from 214 artificial skips down to 12 true skips (2.09% skip rate), reflecting genuine listening behavior.
+
+---
+
 ## [1.5.0] - 2026-10-03: Autonomous Cloud Model Retraining & Zero-Leakage Pipeline
 
 ### Added

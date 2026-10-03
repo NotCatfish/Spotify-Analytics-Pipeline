@@ -49,6 +49,7 @@ def test_replay_session_skip_detection_and_momentum(mock_artifacts):
     base_time = datetime(2026, 9, 24, 12, 0, 0, tzinfo=timezone.utc)
     tracks = [
         {
+            # First track finished at 12:00:00 (completed session start)
             "played_at_str": "2026-09-24T12:00:00.000Z",
             "played_at_dt": base_time,
             "track_id": "track_1",
@@ -58,7 +59,7 @@ def test_replay_session_skip_detection_and_momentum(mock_artifacts):
             "duration_sec": 240.0,
         },
         {
-            # Played only 25 seconds later -> Track 1 was skipped after 25s!
+            # Concluded only 25 seconds later (12:00:25) -> Track 2 was skipped after 25s!
             "played_at_str": "2026-09-24T12:00:25.000Z",
             "played_at_dt": base_time + timedelta(seconds=25),
             "track_id": "track_2",
@@ -68,7 +69,7 @@ def test_replay_session_skip_detection_and_momentum(mock_artifacts):
             "duration_sec": 240.0,
         },
         {
-            # Played 245 seconds later -> Track 2 was fully completed!
+            # Concluded 245 seconds later (12:04:30) -> Track 3 was fully completed!
             "played_at_str": "2026-09-24T12:04:30.000Z",
             "played_at_dt": base_time + timedelta(seconds=270),
             "track_id": "track_3",
@@ -82,15 +83,20 @@ def test_replay_session_skip_detection_and_momentum(mock_artifacts):
     records = replay_session_and_predict(tracks, mock_artifacts)
     assert len(records) == 3
 
-    # Track 1 check: Was skipped (delta 25s < cutoff ~230s)
-    assert records[0]["actual_skipped"] == 1
-    assert records[0]["actual_played_sec"] == 25.0
+    # Track 1 check: Completed (first track of session)
+    assert records[0]["actual_skipped"] == 0
+    assert records[0]["actual_played_sec"] == 240.0
     assert records[0]["song_name"] == "Yellow"
 
-    # Track 2 check: Was completed (delta 245s >= cutoff ~230s)
-    assert records[1]["actual_skipped"] == 0
-    assert records[1]["actual_played_sec"] == 240.0
+    # Track 2 check: Was skipped after 25s (elapsed 25s < cutoff ~230s)
+    assert records[1]["actual_skipped"] == 1
+    assert records[1]["actual_played_sec"] == 25.0
     assert records[1]["song_name"] == "Karma Police"
+
+    # Track 3 check: Was completed (elapsed 245s >= cutoff ~230s)
+    assert records[2]["actual_skipped"] == 0
+    assert records[2]["actual_played_sec"] == 240.0
+    assert records[2]["song_name"] == "Creep"
 
 
 def test_replay_session_idle_break_resets_streak(mock_artifacts):

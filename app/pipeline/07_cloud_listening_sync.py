@@ -16,6 +16,7 @@ Key Features:
 
 import os
 import sys
+import json
 import math
 import sqlite3
 import argparse
@@ -40,6 +41,7 @@ import pandas as pd
 # Path Definitions
 DB_PATH = resolve_path("data/audit/production_audit.db")
 FEATURE_STORE_PATH = resolve_path("data/processed/Engineered_Spotify_Portable.db")
+LOOKUP_PATH = resolve_path("data/processed/feature_store_lookup.json")
 MODEL_PATH = resolve_path("models/spotify_skip_predictor_xgb.pkl")
 CACHE_PATH = resolve_path("app/api/.spotify_cache")
 
@@ -192,8 +194,16 @@ def load_model_artifacts() -> Dict:
     except Exception as e:
         print(f"[WARNING] Failed to load XGBoost model: {e}")
 
-    # Load feature store lookups if SQLite DB is available
-    if FEATURE_STORE_PATH.exists():
+    # Load feature store lookups from JSON (primary for serverless runners) or SQLite DB
+    if LOOKUP_PATH.exists():
+        try:
+            with open(LOOKUP_PATH, "r", encoding="utf-8") as f:
+                lookup_data = json.load(f)
+                artifacts["artist_lookup"] = lookup_data.get("artist_lookup", {})
+                artifacts["song_lookup"] = lookup_data.get("song_lookup", {})
+        except Exception as e:
+            print(f"[WARNING] Could not load feature store lookups from JSON: {e}")
+    elif FEATURE_STORE_PATH.exists():
         try:
             conn = sqlite3.connect(FEATURE_STORE_PATH)
             artist_df = pd.read_sql("SELECT artist_name, artist_smoothed_skip_rate FROM Engineered_Spotify_Portable ORDER BY time_stamp DESC", conn)
@@ -206,58 +216,65 @@ def load_model_artifacts() -> Dict:
             }
             conn.close()
         except Exception as e:
-            print(f"[WARNING] Could not load feature store lookups: {e}")
+            print(f"[WARNING] Could not load feature store lookups from SQLite: {e}")
 
     return artifacts
 
 
 def replay_session_and_predict(tracks: List[Dict], artifacts: Dict) -> List[Dict]:
     """
-    Replays the listening history chronologically to reconstruct session momentum
+    Replays listening history chronologically to reconstruct session momentum
     (skips_last_3m, seconds_since_last_skip, session idle gaps) and evaluate predictions.
+    Strictly causal with zero lookahead leakage.
     """
     if not tracks:
         return []
+
+    # Ensure chronological order (oldest to newest)
+    tracks = sorted(tracks, key=lambda x: x["played_at_dt"])
 
     now_utc = datetime.now(timezone.utc)
     skip_timestamps = []
     consecutive_streak = 0
     previous_skipped = False
     reason_start = "trackdone"
+    prev_dt = None
 
     evaluated_records = []
 
     for i, t in enumerate(tracks):
         dt = t["played_at_dt"]
-        duration = t["duration_sec"]
-        cutoff = max(10.0, duration - 10.0) if duration > 15.0 else 30.0
+        duration = float(t["duration_sec"])
+        cutoff = max(10.0, duration - 10.0) if duration > 15.0 else duration
 
-        # Determine elapsed time to next song
-        if i + 1 < len(tracks):
-            next_dt = tracks[i + 1]["played_at_dt"]
-            delta_sec = max(0.0, (next_dt - dt).total_seconds())
+        # 1. Determine playback duration and whether an idle session break occurred
+        if prev_dt is not None:
+            elapsed_since_prev = max(0.0, (dt - prev_dt).total_seconds())
+            is_idle_break = (elapsed_since_prev > 600.0)
         else:
-            # For the most recent song, compare against current time
-            delta_sec = max(0.0, (now_utc - dt).total_seconds())
+            elapsed_since_prev = duration
+            is_idle_break = True
 
-        # Check for idle pause (> 10 minutes between songs resets session)
-        is_idle_break = (i > 0 and delta_sec > 600.0)
         if is_idle_break:
             skip_timestamps.clear()
             consecutive_streak = 0
             previous_skipped = False
             reason_start = "trackdone"
+            track_start_dt = dt - timedelta(seconds=duration)
+        else:
+            track_start_dt = prev_dt
 
-        # 1. Calculate past session momentum (Strictly PAST events, ZERO lookahead)
-        current_time_sec = dt.timestamp()
-        valid_past_skips = [st for st in skip_timestamps if (current_time_sec - st) <= 900.0 and st < current_time_sec]
-        skips_3m = len([st for st in valid_past_skips if (current_time_sec - st) <= 180.0])
+        track_start_sec = track_start_dt.timestamp()
+
+        # 2. Calculate past session momentum (Strictly PAST events relative to song start)
+        valid_past_skips = [st for st in skip_timestamps if (track_start_sec - st) <= 900.0 and st <= track_start_sec]
+        skips_3m = len([st for st in valid_past_skips if (track_start_sec - st) <= 180.0])
         skips_15m = len(valid_past_skips)
-        sec_since_skip = (current_time_sec - valid_past_skips[-1]) if valid_past_skips else 10000.0
+        sec_since_skip = (track_start_sec - valid_past_skips[-1]) if valid_past_skips else 10000.0
 
-        # 2. Feature preparation for XGBoost (Only uses information available at song start)
-        hour = dt.hour
-        day = dt.weekday()
+        # 3. Feature preparation for XGBoost (Available at song start)
+        hour = track_start_dt.hour
+        day = track_start_dt.weekday()
         hour_sin = math.sin(2 * math.pi * hour / 24)
         hour_cos = math.cos(2 * math.pi * hour / 24)
 
@@ -266,11 +283,12 @@ def replay_session_and_predict(tracks: List[Dict], artifacts: Dict) -> List[Dict
 
         artist_key = t["artist_name"].strip().lower()
         song_key = t["song_name"].strip().lower()
-        is_cold_start = 1 if artist_key not in artifacts["artist_lookup"] else 0
-        artist_rate = artifacts["artist_lookup"].get(artist_key, 0.104)
-        song_rate = artifacts["song_lookup"].get(song_key, artist_rate)
+        artist_lookup = artifacts.get("artist_lookup", {})
+        song_lookup = artifacts.get("song_lookup", {})
+        is_cold_start = 1 if artist_key not in artist_lookup else 0
+        artist_rate = artist_lookup.get(artist_key, 0.104)
+        song_rate = song_lookup.get(song_key, artist_rate)
 
-        # 19 Model Input Features (Completely blind to whether this song will be skipped)
         feature_dict = {
             "artist_smoothed_skip_rate": float(artist_rate),
             "song_smoothed_skip_rate": float(song_rate),
@@ -290,11 +308,11 @@ def replay_session_and_predict(tracks: List[Dict], artifacts: Dict) -> List[Dict
             "previous_song_skipped": int(previous_skipped),
             "consecutive_listens_streak": consecutive_streak,
             "shuffle_mode": 0,
-            "is_session_start": 1 if consecutive_streak == 0 else 0
+            "is_session_start": 1 if (is_idle_break or consecutive_streak == 0) else 0
         }
 
-        # 3. Model Skip Prediction (Locked in BEFORE knowing the outcome)
-        if artifacts["is_ready"]:
+        # 4. Model Skip Prediction (Locked in BEFORE knowing the outcome)
+        if artifacts.get("is_ready") and artifacts.get("model") is not None:
             try:
                 input_df = pd.DataFrame([feature_dict])[artifacts["features"]]
                 prob = float(artifacts["model"].predict_proba(input_df)[0][1])
@@ -303,21 +321,17 @@ def replay_session_and_predict(tracks: List[Dict], artifacts: Dict) -> List[Dict
         else:
             prob = 0.35
 
-        threshold = artifacts["threshold"]
+        threshold = artifacts.get("threshold", 0.45)
         pred_skip_int = 1 if prob >= threshold else 0
         risk_tier = "CRITICAL" if prob >= threshold else ("LOW" if prob < 0.35 else "MODERATE")
 
-        # 4. Ground Truth Evaluation (Teacher grading: what actually happened later?)
-        if i + 1 < len(tracks):
-            was_skipped = (delta_sec < cutoff)
-            actual_played_sec = round(min(delta_sec, duration), 1)
+        # 5. Ground Truth Evaluation (Playback concludes at dt)
+        if not is_idle_break:
+            was_skipped = (elapsed_since_prev < cutoff)
+            actual_played_sec = round(min(elapsed_since_prev, duration), 1)
         else:
-            if delta_sec >= cutoff:
-                was_skipped = False
-                actual_played_sec = duration
-            else:
-                was_skipped = False
-                actual_played_sec = duration
+            was_skipped = False
+            actual_played_sec = duration
 
         actual_skip_int = 1 if was_skipped else 0
 
@@ -334,9 +348,9 @@ def replay_session_and_predict(tracks: List[Dict], artifacts: Dict) -> List[Dict
         # CDN Bandwidth Saving Formula
         mb_saved = 1.00 if (actual_skip_int == 1 and pred_skip_int == 1 and actual_played_sec < 45.0) else 0.00
 
-        # 5. Advance session state for FUTURE songs
+        # 6. Advance session state for FUTURE songs (Track i+1)
         if was_skipped:
-            skip_timestamps.append(current_time_sec)
+            skip_timestamps.append(dt.timestamp())
             previous_skipped = True
             reason_start = "fwdbtn"
             consecutive_streak = 0
@@ -345,10 +359,12 @@ def replay_session_and_predict(tracks: List[Dict], artifacts: Dict) -> List[Dict
             reason_start = "trackdone"
             consecutive_streak += 1
 
+        prev_dt = dt
+
         evaluated_records.append({
             "spotify_played_at": t["played_at_str"],
-            "predicted_at": dt.strftime("%Y-%m-%d %H:%M:%S"),
-            "resolved_at": (dt + timedelta(seconds=actual_played_sec)).strftime("%Y-%m-%d %H:%M:%S"),
+            "predicted_at": track_start_dt.strftime("%Y-%m-%d %H:%M:%S"),
+            "resolved_at": dt.strftime("%Y-%m-%d %H:%M:%S"),
             "track_id": t["track_id"],
             "song_name": t["song_name"],
             "artist_name": t["artist_name"],
