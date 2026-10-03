@@ -15,6 +15,10 @@ data/*
 !data/audit/
 data/audit/*
 !data/audit/shadow_audit.jsonl
+!data/audit/retrain_status.json
+!data/processed/
+data/processed/*
+!data/processed/feature_store_lookup.json
 !data/**/*.dvc
 !data/**/*.gitkeep
 models/*
@@ -23,6 +27,9 @@ models/*
 !models/spotify_skip_predictor_xgb.pkl
 *.csv
 *.json
+!data/audit/shadow_audit.jsonl
+!data/audit/retrain_status.json
+!data/processed/feature_store_lookup.json
 *.db
 *.sqlite
 *.sqlite3

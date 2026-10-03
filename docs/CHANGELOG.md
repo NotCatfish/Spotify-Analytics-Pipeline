@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [1.4.0] - 2026-10-03: Production Telemetry Ingestion & Local Feature Store Augmentation
+
+### Added
+- **Local Telemetry Ingestion Engine:** Synchronized 573 real-world listening records (549 tracks from 9-day GitHub Actions cloud audit plus 24 freshly collected tracks from Spotify API) directly into the local SQLite audit database (`data/audit/production_audit.db`).
+- **Engineered Live Stream Dataset (`data/processed/live_listening_stream_573.csv`):** Standalone 41-feature CSV with complete causal session momentum and smoothed Bayesian skip rates for direct import into notebooks.
+- **Standalone Live Feature Store (`data/processed/Live_Streaming_Audit_Portable.db`):** Isolated SQLite database containing only the 573 newly evaluated tracks formatted identically to `Engineered_Spotify_Portable` for immediate testing in `03_ml_modeling.ipynb`.
+- **Lightweight Cloud Feature Store Lookup (`data/processed/feature_store_lookup.json`):** 387.7 KB JSON mapping 3,019 artists and 12,056 songs to their smoothed skip rates, eliminating the need to bundle the 58 MB SQLite database in cloud environments.
+- **Automated Retraining Signal Verification:** Validated `app/pipeline/04_retrain_trigger.py` against `data/audit/production_audit.db`, firing retraining trigger on 573 resolved tracks (threshold >= 100).
+- **Zero-Leakage Training & Out-Of-Time Holdout Setup (`app/notebooks/03_ml_modeling.ipynb`):** Re-architected model training pipeline to train 100% on historical modern data (126,800 records from 2023 to August 2026) with an internal 95:5 chronological validation split (120,460 train-tune / 6,340 val-tune) for Optuna Bayesian hyperparameter search, and evaluating Champion XGBoost, Random Forest, and Soft Voting Ensemble against the 573 freshly downloaded live tracks (`Live_Streaming_Audit_Portable.db`) as an untouched real-world test set.
+- **Daily Automated Model Retraining & Retry Engine (`app/pipeline/08_daily_model_retrain.py` & `.github/workflows/model_retrain.yml`):** Implemented an autonomous daily MLOps retraining pipeline scheduled at 0:00 UTC with automated 37-minute retries (`cron: '0,37 * * * *'`). Uses a persistent JSON flag (`data/audit/retrain_status.json`) to verify whether today's retraining has succeeded, auto-committing the retrained XGBoost model (`models/spotify_skip_predictor_xgb.pkl`) back to Git with `[skip ci]`.
+
+### Changed
+- **Feature Store Augmentation (`data/processed/Engineered_Spotify_Portable.db`):** Backed up original database to `Engineered_Spotify_Portable.db.bak` (58.2 MB) and appended 573 modern 2026 records, expanding total historical streaming dataset to 215,654 rows.
+- **Shadow Audit Sync (`data/audit/shadow_audit.jsonl`):** Appended 24 new ground truth playback records up to October 3, 2026.
+
+---
+
 ## [1.3.0] - 2026-09-24: 24/7 Cloud Listening Sync & Automated Shadow Audit
 
 ### Architectural Evolution: AWS Decommissioning & Zero-Cost Alternative Selection
