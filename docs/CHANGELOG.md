@@ -11,6 +11,7 @@ All notable changes to this project are documented in this file.
 - **Stateless Serverless Feature Lookup:** Updated `07_cloud_listening_sync.py` to prioritize `data/processed/feature_store_lookup.json` (3,019 artists, 12,056 songs) instead of requiring local DVC-tracked SQLite database `Engineered_Spotify_Portable.db`, ensuring serverless GitHub Actions runners accurately calculate Bayes skip rates.
 - **Unit Test Causal Realignment (`app/tests/test_cloud_sync.py`):** Realiged `test_replay_session_skip_detection_and_momentum` to assert strictly causal start-to-finish track duration and ground-truth skip detection.
 - **Audit Data Re-Grading:** Re-graded all 573 records across `data/audit/shadow_audit.jsonl`, `data/audit/production_audit.db`, and `data/processed/Live_Streaming_Audit_Portable.db`. Corrected actual skips from 214 artificial skips down to 12 true skips (2.09% skip rate), reflecting genuine listening behavior.
+- **Model Retrained on Pristine Telemetry:** Retrained XGBoost classifier directly on the corrected dataset via `08_daily_model_retrain.py --force` (commit `04b9872`), achieving ROC-AUC of 0.9380, Precision of 0.8001, and Recall of 0.6844 at optimal decision threshold 0.7816 across all 127,373 combined records.
 
 ---
 
