@@ -19,6 +19,7 @@ data/audit/*
 !data/processed/
 data/processed/*
 !data/processed/feature_store_lookup.json
+!data/processed/modern_historical_baseline.parquet
 !data/**/*.dvc
 !data/**/*.gitkeep
 models/*
@@ -34,6 +35,7 @@ models/*
 *.sqlite
 *.sqlite3
 *.parquet
+!data/processed/modern_historical_baseline.parquet
 *.pkl
 !models/spotify_skip_predictor_xgb.pkl
 *.joblib

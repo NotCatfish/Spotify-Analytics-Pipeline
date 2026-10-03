@@ -35,6 +35,7 @@ DEFAULT_STATUS_PATH = resolve_path("data/audit/retrain_status.json")
 DEFAULT_AUDIT_PATH = resolve_path("data/audit/shadow_audit.jsonl")
 DEFAULT_MODEL_PATH = resolve_path("models/spotify_skip_predictor_xgb.pkl")
 DEFAULT_LOOKUP_PATH = resolve_path("data/processed/feature_store_lookup.json")
+DEFAULT_BASELINE_PARQUET = resolve_path("data/processed/modern_historical_baseline.parquet")
 DEFAULT_HIST_DB = resolve_path("data/processed/Engineered_Spotify_Portable.db.bak")
 DEFAULT_CURR_DB = resolve_path("data/processed/Engineered_Spotify_Portable.db")
 
@@ -236,8 +237,15 @@ def run_daily_retrain(
             return False
 
         # 3. Combine with historical baseline if local DB exists
+        # 3. Combine with historical baseline (prefer lightweight Parquet, fallback to SQLite)
         training_frames = []
-        if DEFAULT_HIST_DB.exists():
+        if DEFAULT_BASELINE_PARQUET.exists():
+            print(f"Loading historical baseline from Parquet: {DEFAULT_BASELINE_PARQUET.name}...")
+            hist_df = pd.read_parquet(DEFAULT_BASELINE_PARQUET)
+            common_cols = [c for c in FEATURE_COLUMNS + ["is_skip"] if c in hist_df.columns]
+            training_frames.append(hist_df[common_cols])
+            print(f"Combined with {len(hist_df):,} historical modern records from Parquet.")
+        elif DEFAULT_HIST_DB.exists():
             import sqlite3
             conn = sqlite3.connect(DEFAULT_HIST_DB)
             hist_df = pd.read_sql("SELECT * FROM Engineered_Spotify_Portable WHERE year >= 2023", conn)
