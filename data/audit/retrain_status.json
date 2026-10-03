@@ -1,11 +1,11 @@
 {
-  "last_retrained_date": "2026-10-02",
-  "last_retrained_utc": "2026-10-02T00:00:00Z",
-  "status": "PENDING",
-  "records_evaluated": 126800,
-  "roc_auc": 0.858,
-  "best_threshold": 0.749,
+  "last_retrained_date": "2026-10-03",
+  "last_retrained_utc": "2026-10-03T12:31:01.594474+00:00",
+  "status": "SUCCESS",
+  "records_evaluated": 127373,
+  "roc_auc": 0.9381,
+  "best_threshold": 0.7715,
   "precision": 0.8,
-  "recall": 0.6,
-  "model_size_kb": 836.86
+  "recall": 0.6906,
+  "model_size_kb": 832.33
 }
