@@ -12,28 +12,30 @@
 ```
 Spotify-Analytics-Pipeline/
 ├── .github/workflows/
-│   ├── ci.yml                      # CI runner (flake8 + pytest)
-│   └── spotify_sync.yml            # 24/7 Cloud Listening Sync & Model Audit (cron / dispatch)
+│   ├── ci.yml                           # CI runner (flake8 + pytest)
+│   ├── spotify_sync.yml                 # 24/7 Cloud Listening Sync & Model Audit (cron / dispatch)
+│   └── model_retrain.yml                # Daily automated 00:00 UTC model retraining with 37m retry
 ├── app/
-│   ├── api/                        # FastAPI microservice & static dashboard UI
-│   │   ├── main.py                 # Serving app with degraded-mode boot resilience
-│   │   ├── schemas.py              # Pydantic v2 schemas
-│   │   ├── spotify_client.py       # Spotipy OAuth + Last.fm live tagger (with recently-played scope)
-│   │   └── static/dashboard.html   # Dark-mode dashboard (900ms auto-refresh)
-│   ├── notebooks/                  # Scrubbed research notebooks (01, 02, 03)
-│   ├── pipeline/                   # Production CLI engines (01 through 07)
-│   │   ├── 07_cloud_listening_sync.py # Headless cron sync & zero-leakage session replay
-│   │   └── get_refresh_token.py    # Local one-time OAuth token helper
-│   ├── tests/                      # 24 automated Pytest test cases across 7 suites
-│   │   ├── test_cloud_sync.py      # Session momentum, replay, and idempotency tests
+│   ├── api/                             # FastAPI microservice & static dashboard UI
+│   │   ├── main.py                      # Serving app with degraded-mode boot resilience
+│   │   ├── schemas.py                   # Pydantic v2 schemas
+│   │   ├── spotify_client.py            # Spotipy OAuth + Last.fm live tagger (with recently-played scope)
+│   │   └── static/dashboard.html        # Dark-mode dashboard (900ms auto-refresh)
+│   ├── notebooks/                       # Scrubbed research notebooks (01, 02, 03 - 0 outputs/vars)
+│   ├── pipeline/                        # Production CLI engines (01 through 08)
+│   │   ├── 07_cloud_listening_sync.py   # Headless cron sync & zero-leakage session replay
+│   │   ├── 08_daily_model_retrain.py    # Autonomous daily retraining engine & flag checker
+│   │   └── get_refresh_token.py         # Local one-time OAuth token helper
+│   ├── tests/                           # 24 automated Pytest test cases across 7 suites
+│   │   ├── test_cloud_sync.py           # Session momentum, replay, and idempotency tests
 │   │   └── ...
-│   └── path_utils.py               # Robust dynamic project root discovery
+│   └── path_utils.py                    # Robust dynamic project root discovery
 ├── data/
-│   ├── raw/                        # Raw Spotify JSONs (ignored)
-│   ├── processed/                  # Feature Store SQLite DB (tracked via .dvc)
-│   └── audit/                      # Shadow Mode SQLite audit database & shadow_audit.jsonl
-├── docs/                           # Architectural, EDA, ML & handoff documentation
-└── models/                         # Serialized XGBoost models (tracked via .dvc)
+│   ├── raw/                             # Raw Spotify JSONs (ignored)
+│   ├── processed/                       # Feature store (modern_historical_baseline.parquet + SQLite via .dvc)
+│   └── audit/                           # shadow_audit.jsonl, production_audit.db, retrain_status.json
+├── docs/                                # Architectural, EDA, ML & handoff documentation
+└── models/                              # Serialized XGBoost models (tracked in Git & .dvc)
 ```
 
 ---
@@ -45,31 +47,33 @@ Spotify-Analytics-Pipeline/
 - **Current Architecture (GitHub Actions Serverless Cron):**
   - **Zero Cost & Zero Maintenance:** 100% free runner tier on public GitHub repositories with zero server maintenance.
   - **Execution Engine:** `.github/workflows/spotify_sync.yml` triggers twice every hour (`14,47 * * * *`) via off-peak POSIX cron + manual `workflow_dispatch`.
+  - **Autonomous Daily Retraining:** `.github/workflows/model_retrain.yml` triggers daily at 00:00 UTC with automated 37-minute retries (`0,37 * * * *`) backed by persistent state flag `data/audit/retrain_status.json`.
   - **Causal Session Replay:** `app/pipeline/07_cloud_listening_sync.py` pulls recently played tracks, calculates past session momentum strictly before prediction time, resolves actual skip outcomes via subsequent track timestamps (`duration - 10s`), and logs predictions.
   - **Stateless Deduplication:** Since cloud runners are ephemeral and do not retain SQLite state, the runner deduplicates incoming tracks against `data/audit/shadow_audit.jsonl` in-memory.
-  - **Git-Native Storage:** Results are auto-committed by `github-actions[bot]` with `[skip ci]` directly into Git, creating a verifiable public audit trail.
+  - **Git-Native Storage:** Results and updated model binaries are auto-committed by `github-actions[bot]` with `[skip ci]` directly into Git, creating a verifiable public audit trail.
 
 ---
 
 ## 4. Critical Technical Rules & Gotchas
 1. **Dynamic Pathing:** NEVER use hardcoded or brittle relative paths. Always use `from path_utils import resolve_path, find_project_root`.
 2. **Model Binary Tracking:**
-   - `models/spotify_skip_predictor_xgb.pkl` (1.19 MB) is directly tracked in Git to allow cloud runners to execute full XGBoost inferences without external DVC pull overhead.
-   - Large raw datasets remain tracked via `.dvc`.
+   - `models/spotify_skip_predictor_xgb.pkl` is directly tracked in Git to allow cloud runners to execute full XGBoost inferences and updates without external DVC pull overhead.
+   - Large raw datasets remain tracked via `.dvc`, while modern training baseline (`modern_historical_baseline.parquet`, 4.04 MB) is tracked in Git.
 3. **CI/CD Resilience & Cloud Sync:**
-   - Cloud sync commits `data/audit/shadow_audit.jsonl` using `[skip ci]` to prevent recurring CI trigger loops.
+   - Cloud sync and retrain runners commit with `[skip ci]` to prevent recurring CI trigger loops.
    - GitHub Encrypted Secrets configure `SPOTIPY_CLIENT_ID`, `SPOTIPY_CLIENT_SECRET`, and `SPOTIPY_REFRESH_TOKEN`.
 4. **Git Pre-Commit Gate:**
    - Local `.git/hooks/pre-commit` enforces that all 24 Pytest tests pass before any commit can succeed.
 5. **PII and Data Leaks:**
    - Sensitive credentials (`.env`, `SPOTIPY_REFRESH_TOKEN`, `.spotify_cache`) must NEVER be committed to Git.
+   - Notebooks must be committed scrubbed of all execution outputs and stored data variables.
 
 ---
 
 ## 5. Current Work State & Immediate Next Steps
-- **State:** 24/7 cloud sync pipeline is in active production on GitHub Actions running on an off-peak twice-hourly cron schedule (`14,47 * * * *`) with `--hours 0`. All 573 real-world streaming records (549 from GitHub Actions + 24 from local real-time sync) are synchronized locally into `data/audit/production_audit.db` and feature-engineered into `data/processed/live_listening_stream_573.csv`, `data/processed/Live_Streaming_Audit_Portable.db`, and augmented into `data/processed/Engineered_Spotify_Portable.db`.
-- **Active Task:** Deployed daily automated retraining engine (`app/pipeline/08_daily_model_retrain.py`) and GitHub Actions workflow (`.github/workflows/model_retrain.yml`) scheduled at 0:00 UTC with 37-minute retries (`cron: '0,37 * * * *'`) backed by `data/audit/retrain_status.json`. Cleaned and scrubbed `app/notebooks/03_ml_modeling.ipynb` (0 outputs, 0 stored variables) ready for GitHub push.
-- **Next Planned Milestone:** Push updates to GitHub `main` branch and verify automated GitHub Actions workflow execution.
+- **State:** Autonomous daily MLOps retraining loop is live on GitHub Actions (`.github/workflows/model_retrain.yml`). First live cloud retrain (commit `d1f406b`) successfully executed on 127,373 combined samples (126,800 modern baseline Parquet + 573 live stream records), achieving ROC-AUC of 0.9381, Precision of 0.8000, and Recall of 0.6906 at SLA decision threshold 0.7715. Status flag (`data/audit/retrain_status.json`) is marked `SUCCESS` for 2026-10-03.
+- **Active Phase:** Phase 8 (Drift Alerting & Production Serving Hardening).
+- **Next Planned Milestone:** Implement automated webhook/issue alerting if weekly skip precision slips below the 78% business guardrail; benchmark FastAPI `/predict_skip` latency under high-concurrency batch loads.
 
 
 

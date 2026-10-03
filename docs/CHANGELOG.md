@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [1.5.0] - 2026-10-03: Autonomous Cloud Model Retraining & Zero-Leakage Pipeline
+
+### Added
+- **Modern Historical Baseline Parquet (`data/processed/modern_historical_baseline.parquet`):** Compact 4.04 MB ZSTD-compressed Parquet file containing all 126,800 modern historical listening records (`year >= 2023`). Whitelisted in Git, enabling serverless cloud runners to access the complete historical baseline with zero DVC credentials.
+- **Daily Automated Model Retraining Engine (`app/pipeline/08_daily_model_retrain.py`):** Production retraining CLI that concatenates the 126k baseline records with all novel telemetry from `data/audit/shadow_audit.jsonl` (127,373 rows total), fits XGBoost on CPU, optimizes decision thresholds to strictly enforce the Precision >= 80% SLA floor, and writes `data/audit/retrain_status.json`.
+- **Automated GitHub Actions Workflow (`.github/workflows/model_retrain.yml`):** Off-peak cron schedule (`cron: '0,37 * * * *'`) running daily at 00:00 UTC with automatic 37-minute retries if uncompleted, auto-committing retrained model artifacts back to Git with `[skip ci]`.
+- **First Live Cloud Retrain Verified (Commit `d1f406b`):** Autonomous execution by `github-actions[bot]` evaluated 127,373 records, achieving ROC-AUC of 0.9381, Precision of 0.8000, and Recall of 0.6906 at decision threshold 0.7715.
+
+### Changed
+- **Zero-Leakage Modeling Notebook (`app/notebooks/03_ml_modeling.ipynb`):** Decoupled from arbitrary train/test split; refactored to train on 100% of historical modern data with a strict internal 95:5 chronological validation split for Optuna Bayesian hyperparameter search, and evaluating against the 573 live tracks as an untouched out-of-time holdout. Completely scrubbed of all execution outputs, variables, and cell counts.
+
+---
+
 ## [1.4.0] - 2026-10-03: Production Telemetry Ingestion & Local Feature Store Augmentation
 
 ### Added
@@ -12,8 +25,6 @@ All notable changes to this project are documented in this file.
 - **Standalone Live Feature Store (`data/processed/Live_Streaming_Audit_Portable.db`):** Isolated SQLite database containing only the 573 newly evaluated tracks formatted identically to `Engineered_Spotify_Portable` for immediate testing in `03_ml_modeling.ipynb`.
 - **Lightweight Cloud Feature Store Lookup (`data/processed/feature_store_lookup.json`):** 387.7 KB JSON mapping 3,019 artists and 12,056 songs to their smoothed skip rates, eliminating the need to bundle the 58 MB SQLite database in cloud environments.
 - **Automated Retraining Signal Verification:** Validated `app/pipeline/04_retrain_trigger.py` against `data/audit/production_audit.db`, firing retraining trigger on 573 resolved tracks (threshold >= 100).
-- **Zero-Leakage Training & Out-Of-Time Holdout Setup (`app/notebooks/03_ml_modeling.ipynb`):** Re-architected model training pipeline to train 100% on historical modern data (126,800 records from 2023 to August 2026) with an internal 95:5 chronological validation split (120,460 train-tune / 6,340 val-tune) for Optuna Bayesian hyperparameter search, and evaluating Champion XGBoost, Random Forest, and Soft Voting Ensemble against the 573 freshly downloaded live tracks (`Live_Streaming_Audit_Portable.db`) as an untouched real-world test set.
-- **Daily Automated Model Retraining & Retry Engine (`app/pipeline/08_daily_model_retrain.py` & `.github/workflows/model_retrain.yml`):** Implemented an autonomous daily MLOps retraining pipeline scheduled at 0:00 UTC with automated 37-minute retries (`cron: '0,37 * * * *'`). Uses a persistent JSON flag (`data/audit/retrain_status.json`) to verify whether today's retraining has succeeded, auto-committing the retrained XGBoost model (`models/spotify_skip_predictor_xgb.pkl`) back to Git with `[skip ci]`.
 
 ### Changed
 - **Feature Store Augmentation (`data/processed/Engineered_Spotify_Portable.db`):** Backed up original database to `Engineered_Spotify_Portable.db.bak` (58.2 MB) and appended 573 modern 2026 records, expanding total historical streaming dataset to 215,654 rows.
