@@ -1,19 +1,33 @@
-from contextlib import asynccontextmanager
+import sys
 from pathlib import Path
+from contextlib import asynccontextmanager
+
+# Dynamic path resolution: ensure project root, app, and app/api are on sys.path
+_API_DIR = Path(__file__).resolve().parent
+_APP_DIR = _API_DIR.parent
+_PROJECT_ROOT = _APP_DIR.parent
+for _p in [str(_PROJECT_ROOT), str(_APP_DIR), str(_API_DIR)]:
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
+from path_utils import resolve_path, find_project_root
+
 from fastapi import FastAPI, HTTPException, status
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import joblib
-from schemas import SkipPredictionResponse, TrackPredictRequest, DualPolicyAction
-from spotify_client import get_spotify_oauth, get_live_spotify_data, get_lastfm_tags, control_playback, change_volume
+
+try:
+    from app.api.schemas import SkipPredictionResponse, TrackPredictRequest, DualPolicyAction
+    from app.api.spotify_client import get_spotify_oauth, get_live_spotify_data, get_lastfm_tags, control_playback, change_volume
+except ImportError:
+    from schemas import SkipPredictionResponse, TrackPredictRequest, DualPolicyAction
+    from spotify_client import get_spotify_oauth, get_live_spotify_data, get_lastfm_tags, control_playback, change_volume
+
 import math
 from datetime import datetime
 import pandas as pd
 import sqlite3
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from path_utils import resolve_path, find_project_root
 
 MODEL_PATH = resolve_path("models/spotify_skip_predictor_xgb.pkl")
 DB_PATH = resolve_path("data/processed/Engineered_Spotify_Portable.db")
