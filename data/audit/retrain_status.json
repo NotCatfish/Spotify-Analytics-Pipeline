@@ -1,11 +1,11 @@
 {
-  "last_retrained_date": "2026-10-03",
-  "last_retrained_utc": "2026-10-03T13:08:30.558594+00:00",
+  "last_retrained_date": "2026-10-04",
+  "last_retrained_utc": "2026-10-04T01:55:59.321606+00:00",
   "status": "SUCCESS",
-  "records_evaluated": 127373,
-  "roc_auc": 0.938,
-  "best_threshold": 0.7816,
-  "precision": 0.8001,
-  "recall": 0.6844,
-  "model_size_kb": 853.55
+  "records_evaluated": 127395,
+  "roc_auc": 0.9385,
+  "best_threshold": 0.7803,
+  "precision": 0.8,
+  "recall": 0.6826,
+  "model_size_kb": 851.28
 }
