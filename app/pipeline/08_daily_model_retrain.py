@@ -16,7 +16,7 @@ import sys
 import json
 import math
 import argparse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -29,6 +29,7 @@ from sklearn.metrics import roc_auc_score, precision_recall_curve
 # Dynamic path resolution
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from path_utils import resolve_path, find_project_root
+from pipeline.feature_utils import build_single_feature_vector, FEATURE_COLUMNS
 
 PROJECT_ROOT = find_project_root(__file__)
 DEFAULT_STATUS_PATH = resolve_path("data/audit/retrain_status.json")
@@ -38,28 +39,6 @@ DEFAULT_LOOKUP_PATH = resolve_path("data/processed/feature_store_lookup.json")
 DEFAULT_BASELINE_PARQUET = resolve_path("data/processed/modern_historical_baseline.parquet")
 DEFAULT_HIST_DB = resolve_path("data/processed/Engineered_Spotify_Portable.db.bak")
 DEFAULT_CURR_DB = resolve_path("data/processed/Engineered_Spotify_Portable.db")
-
-FEATURE_COLUMNS = [
-    "artist_smoothed_skip_rate",
-    "song_smoothed_skip_rate",
-    "genre_smoothed_skip_rate",
-    "album_smoothed_skip_rate",
-    "reason_start_smoothed_skip_rate",
-    "is_cold_start_artist",
-    "seconds_since_last_skip",
-    "skips_last_3m",
-    "skips_last_15m",
-    "previous_song_skipped",
-    "consecutive_listens_streak",
-    "platform_android",
-    "platform_windows",
-    "shuffle_mode",
-    "is_session_start",
-    "hour_of_day",
-    "day_of_week",
-    "hour_sin",
-    "hour_cos"
-]
 
 
 def load_retrain_status(status_path: Path) -> Dict:
@@ -127,7 +106,15 @@ def extract_features_from_audit(audit_path: Path, lookup_path: Path) -> pd.DataF
     rows = []
     skip_timestamps = []
     consecutive_streak = 0
-    previous_skipped = 0
+    previous_skipped = False
+    reason_start = "trackdone"
+    prev_dt = None
+
+    # Ensure chronological order
+    records = sorted(
+        records,
+        key=lambda x: x.get("spotify_played_at") or x.get("predicted_at") or ""
+    )
 
     for i, t in enumerate(records):
         played_at_str = t.get("spotify_played_at") or t.get("predicted_at")
@@ -139,53 +126,56 @@ def extract_features_from_audit(audit_path: Path, lookup_path: Path) -> pd.DataF
         duration = float(t.get("total_duration_sec") or 180.0)
         actual_skipped = int(t.get("actual_skipped", 0))
 
-        # Session momentum tracking
-        current_time_sec = dt.timestamp()
-        valid_past_skips = [st for st in skip_timestamps if (current_time_sec - st) <= 900.0 and st < current_time_sec]
-        skips_3m = len([st for st in valid_past_skips if (current_time_sec - st) <= 180.0])
-        skips_15m = len(valid_past_skips)
-        sec_since_skip = (current_time_sec - valid_past_skips[-1]) if valid_past_skips else 10000.0
+        if prev_dt is not None:
+            elapsed_since_prev = max(0.0, (dt - prev_dt).total_seconds())
+            is_idle_break = (elapsed_since_prev > 600.0)
+        else:
+            elapsed_since_prev = duration
+            is_idle_break = True
 
+        if is_idle_break:
+            skip_timestamps.clear()
+            consecutive_streak = 0
+            previous_skipped = False
+            reason_start = "trackdone"
+            track_start_dt = dt - timedelta(seconds=duration)
+        else:
+            track_start_dt = prev_dt
+
+        track_start_sec = track_start_dt.timestamp()
+
+        row = build_single_feature_vector(
+            track_start_dt=track_start_dt,
+            artist_name=t.get("artist_name", ""),
+            song_name=t.get("song_name", ""),
+            artist_lookup=artist_lookup,
+            song_lookup=song_lookup,
+            reason_start=reason_start,
+            previous_skipped=previous_skipped,
+            consecutive_streak=consecutive_streak,
+            is_idle_break=is_idle_break,
+            skip_timestamps=skip_timestamps,
+            track_start_sec=track_start_sec,
+            platform_android=0,
+            platform_windows=1,
+            shuffle_mode=0
+        )
+        row["is_skip"] = actual_skipped
+        row["time_stamp"] = dt
+        rows.append(row)
+
+        # Advance state for next track (strictly past outcome)
         if actual_skipped == 1:
-            skip_timestamps.append(current_time_sec)
+            skip_timestamps.append(dt.timestamp())
+            previous_skipped = True
+            reason_start = "fwdbtn"
             consecutive_streak = 0
         else:
+            previous_skipped = False
+            reason_start = "trackdone"
             consecutive_streak += 1
 
-        hour = dt.hour
-        day = dt.weekday()
-        artist_key = t.get("artist_name", "").strip().lower()
-        song_key = t.get("song_name", "").strip().lower()
-
-        artist_rate = artist_lookup.get(artist_key, 0.104)
-        song_rate = song_lookup.get(song_key, artist_rate)
-        is_cold_start = 1 if artist_key not in artist_lookup else 0
-
-        row = {
-            "artist_smoothed_skip_rate": float(artist_rate),
-            "song_smoothed_skip_rate": float(song_rate),
-            "genre_smoothed_skip_rate": float(artist_rate),
-            "album_smoothed_skip_rate": float(artist_rate),
-            "reason_start_smoothed_skip_rate": 0.025,
-            "is_cold_start_artist": is_cold_start,
-            "seconds_since_last_skip": min(sec_since_skip, 10000.0),
-            "skips_last_3m": skips_3m,
-            "skips_last_15m": skips_15m,
-            "previous_song_skipped": previous_skipped,
-            "consecutive_listens_streak": consecutive_streak,
-            "platform_android": 0,
-            "platform_windows": 1,
-            "shuffle_mode": 0,
-            "is_session_start": 1 if i == 0 else 0,
-            "hour_of_day": hour,
-            "day_of_week": day,
-            "hour_sin": math.sin(2 * math.pi * hour / 24),
-            "hour_cos": math.cos(2 * math.pi * hour / 24),
-            "is_skip": actual_skipped,
-            "time_stamp": dt
-        }
-        rows.append(row)
-        previous_skipped = actual_skipped
+        prev_dt = dt
 
     return pd.DataFrame(rows)
 
@@ -266,59 +256,74 @@ def run_daily_retrain(
         combined_df = pd.concat(training_frames, ignore_index=True)
         print(f"Total Combined Training Samples: {len(combined_df):,}")
 
-        # 4. Train Model with Cost-Sensitive Balancing
-        X = combined_df[FEATURE_COLUMNS]
-        y = combined_df["is_skip"].astype(int)
+        # 4. Chronological Out-of-Time Train/Validation Split (Strict Zero-Leakage)
+        val_ratio = 0.15
+        val_size = max(500, int(len(combined_df) * val_ratio))
+        train_df = combined_df.iloc[:-val_size]
+        val_df = combined_df.iloc[-val_size:]
 
-        pos_count = int((y == 1).sum())
-        neg_count = int((y == 0).sum())
+        X_train = train_df[FEATURE_COLUMNS]
+        y_train = train_df["is_skip"].astype(int)
+        X_val = val_df[FEATURE_COLUMNS]
+        y_val = val_df["is_skip"].astype(int)
+
+        print(f"Training Samples: {len(X_train):,} | Out-of-Time Validation Samples: {len(X_val):,}")
+
+        # Cost-Sensitive Balancing on Training Data
+        pos_count = int((y_train == 1).sum())
+        neg_count = int((y_train == 0).sum())
         scale_pos_weight = float(neg_count / max(1, pos_count))
 
+        # Regularized & Feature-Constrained XGBoost (Prevents single-momentum feature domination)
         model = XGBClassifier(
-            n_estimators=200,
-            max_depth=6,
+            n_estimators=150,
+            max_depth=4,
             learning_rate=0.03,
             scale_pos_weight=scale_pos_weight,
-            min_child_weight=5,
+            min_child_weight=20,
             subsample=0.80,
-            colsample_bytree=0.65,
-            reg_alpha=0.1,
-            reg_lambda=5.0,
+            colsample_bytree=0.50,
+            reg_alpha=0.5,
+            reg_lambda=10.0,
             random_state=42,
             tree_method="hist",
             device="cpu"
         )
-        print("Fitting XGBoost Classifier on CPU...")
-        model.fit(X, y)
+        print("Fitting Regularized XGBoost Classifier on CPU...")
+        model.fit(X_train, y_train)
 
-        # 5. Model Evaluation & Threshold Optimization
-        probs = model.predict_proba(X)[:, 1]
-        auc_score = float(roc_auc_score(y, probs))
-        precisions, recalls, thresholds = precision_recall_curve(y, probs)
+        # 5. Out-of-Sample Evaluation & Threshold Optimization (Strictly on Validation Set)
+        train_probs = model.predict_proba(X_train)[:, 1]
+        val_probs = model.predict_proba(X_val)[:, 1]
+
+        train_auc = float(roc_auc_score(y_train, train_probs))
+        val_auc = float(roc_auc_score(y_val, val_probs))
+        precisions, recalls, thresholds = precision_recall_curve(y_val, val_probs)
 
         target_precision = 0.80
         safe_mask = precisions >= target_precision
         if np.any(safe_mask):
             best_idx = np.where(safe_mask)[0][np.argmax(recalls[safe_mask])]
-            best_threshold = float(thresholds[best_idx]) if best_idx < len(thresholds) else 0.5
+            best_threshold = float(thresholds[min(best_idx, len(thresholds) - 1)])
             guaranteed_prec = float(precisions[best_idx])
             safe_recall = float(recalls[best_idx])
         else:
             f1 = 2 * (precisions * recalls) / np.maximum(precisions + recalls, 1e-9)
             best_idx = np.argmax(f1)
-            best_threshold = float(thresholds[best_idx]) if best_idx < len(thresholds) else 0.5
+            best_threshold = float(thresholds[min(best_idx, len(thresholds) - 1)])
             guaranteed_prec = float(precisions[best_idx])
             safe_recall = float(recalls[best_idx])
 
-        print("\n--- RETRAINING EVALUATION METRICS ---")
-        print(f"ROC-AUC Score       : {auc_score:.4f}")
+        print("\n--- OUT-OF-SAMPLE RETRAINING EVALUATION METRICS ---")
+        print(f"Train ROC-AUC Score : {train_auc:.4f}")
+        print(f"Val ROC-AUC Score   : {val_auc:.4f}")
         print(f"Optimal Threshold   : {best_threshold:.4f}")
         print(f"Achieved Precision  : {guaranteed_prec:.4f}")
         print(f"Achieved Recall     : {safe_recall:.4f}")
 
-        # 6. Sanity Gate: Verify model validity before updating artifact
-        if auc_score < 0.60:
-            raise ValueError(f"Retrained model failed sanity gate: ROC-AUC ({auc_score:.4f}) is below 0.60 baseline.")
+        # 6. Sanity Gate: Verify out-of-sample model validity before updating artifact
+        if val_auc < 0.60:
+            raise ValueError(f"Retrained model failed sanity gate: Validation ROC-AUC ({val_auc:.4f}) is below 0.60 baseline.")
 
         # 7. Persist Updated Model Artifact
         payload = {
@@ -328,7 +333,9 @@ def run_daily_retrain(
             "target_precision": target_precision,
             "target": "is_skip",
             "last_retrained_utc": datetime.now(timezone.utc).isoformat(),
-            "samples_count": len(combined_df)
+            "samples_count": len(combined_df),
+            "train_roc_auc": round(train_auc, 4),
+            "val_roc_auc": round(val_auc, 4)
         }
         model_path.parent.mkdir(parents=True, exist_ok=True)
         joblib.dump(payload, str(model_path))
@@ -341,7 +348,10 @@ def run_daily_retrain(
             "last_retrained_utc": datetime.now(timezone.utc).isoformat(),
             "status": "SUCCESS",
             "records_evaluated": len(combined_df),
-            "roc_auc": round(auc_score, 4),
+            "train_records": len(train_df),
+            "val_records": len(val_df),
+            "train_roc_auc": round(train_auc, 4),
+            "roc_auc": round(val_auc, 4),
             "best_threshold": round(best_threshold, 4),
             "precision": round(guaranteed_prec, 4),
             "recall": round(safe_recall, 4),

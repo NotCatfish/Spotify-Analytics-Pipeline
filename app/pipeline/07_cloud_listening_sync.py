@@ -33,6 +33,7 @@ if sys.platform == "win32":
 # Dynamic Project Root Discovery (Repository Standard)
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from path_utils import resolve_path
+from pipeline.feature_utils import build_single_feature_vector, FEATURE_COLUMNS
 
 import requests
 import spotipy
@@ -266,50 +267,23 @@ def replay_session_and_predict(tracks: List[Dict], artifacts: Dict) -> List[Dict
 
         track_start_sec = track_start_dt.timestamp()
 
-        # 2. Calculate past session momentum (Strictly PAST events relative to song start)
-        valid_past_skips = [st for st in skip_timestamps if (track_start_sec - st) <= 900.0 and st <= track_start_sec]
-        skips_3m = len([st for st in valid_past_skips if (track_start_sec - st) <= 180.0])
-        skips_15m = len(valid_past_skips)
-        sec_since_skip = (track_start_sec - valid_past_skips[-1]) if valid_past_skips else 10000.0
-
-        # 3. Feature preparation for XGBoost (Available at song start)
-        hour = track_start_dt.hour
-        day = track_start_dt.weekday()
-        hour_sin = math.sin(2 * math.pi * hour / 24)
-        hour_cos = math.cos(2 * math.pi * hour / 24)
-
-        reason_map = {"trackdone": 0.025, "clickrow": 0.120, "fwdbtn": 0.604, "backbtn": 0.400, "playbtn": 0.050}
-        reason_risk = reason_map.get(reason_start, 0.104)
-
-        artist_key = t["artist_name"].strip().lower()
-        song_key = t["song_name"].strip().lower()
-        artist_lookup = artifacts.get("artist_lookup", {})
-        song_lookup = artifacts.get("song_lookup", {})
-        is_cold_start = 1 if artist_key not in artist_lookup else 0
-        artist_rate = artist_lookup.get(artist_key, 0.104)
-        song_rate = song_lookup.get(song_key, artist_rate)
-
-        feature_dict = {
-            "artist_smoothed_skip_rate": float(artist_rate),
-            "song_smoothed_skip_rate": float(song_rate),
-            "genre_smoothed_skip_rate": float(artist_rate),
-            "album_smoothed_skip_rate": float(artist_rate),
-            "is_cold_start_artist": is_cold_start,
-            "reason_start_smoothed_skip_rate": reason_risk,
-            "platform_android": 0,
-            "platform_windows": 1,
-            "hour_of_day": hour,
-            "day_of_week": day,
-            "hour_sin": hour_sin,
-            "hour_cos": hour_cos,
-            "seconds_since_last_skip": min(sec_since_skip, 10000.0),
-            "skips_last_3m": skips_3m,
-            "skips_last_15m": skips_15m,
-            "previous_song_skipped": int(previous_skipped),
-            "consecutive_listens_streak": consecutive_streak,
-            "shuffle_mode": 0,
-            "is_session_start": 1 if (is_idle_break or consecutive_streak == 0) else 0
-        }
+        # 2 & 3. Feature preparation for XGBoost (Available at song start with unified parity)
+        feature_dict = build_single_feature_vector(
+            track_start_dt=track_start_dt,
+            artist_name=t["artist_name"],
+            song_name=t["song_name"],
+            artist_lookup=artifacts.get("artist_lookup", {}),
+            song_lookup=artifacts.get("song_lookup", {}),
+            reason_start=reason_start,
+            previous_skipped=previous_skipped,
+            consecutive_streak=consecutive_streak,
+            is_idle_break=is_idle_break,
+            skip_timestamps=skip_timestamps,
+            track_start_sec=track_start_sec,
+            platform_android=0,
+            platform_windows=1,
+            shuffle_mode=0
+        )
 
         # 4. Model Skip Prediction (Locked in BEFORE knowing the outcome)
         if artifacts.get("is_ready") and artifacts.get("model") is not None:
