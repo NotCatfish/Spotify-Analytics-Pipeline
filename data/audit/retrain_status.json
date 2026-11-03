@@ -1,14 +1,14 @@
 {
-  "last_retrained_date": "2026-11-02",
-  "last_retrained_utc": "2026-11-02T02:42:07.963532+00:00",
+  "last_retrained_date": "2026-11-03",
+  "last_retrained_utc": "2026-11-03T02:34:26.696159+00:00",
   "status": "SUCCESS",
-  "records_evaluated": 129924,
-  "train_records": 110436,
-  "val_records": 19488,
-  "train_roc_auc": 0.9299,
-  "roc_auc": 0.7647,
-  "best_threshold": 0.9538,
-  "precision": 0.8034,
-  "recall": 0.126,
-  "model_size_kb": 248.49
+  "records_evaluated": 130009,
+  "train_records": 110508,
+  "val_records": 19501,
+  "train_roc_auc": 0.9298,
+  "roc_auc": 0.7629,
+  "best_threshold": 0.9517,
+  "precision": 0.8,
+  "recall": 0.134,
+  "model_size_kb": 248.22
 }
