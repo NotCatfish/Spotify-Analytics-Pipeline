@@ -207,7 +207,7 @@ Spotify-Analytics-Pipeline/
 - Proves that the Champion's high-precision strategy maximizes dollar savings by avoiding catastrophic False Positive user penalties ($0.05 per user disruption).
 - Logs versioned benchmark audits directly into [`docs/ab_testing/AB_TESTING_RESULTS.md`](docs/ab_testing/AB_TESTING_RESULTS.md).
 
-### **$\color{#38BDF8}\text{7.}$** [`app/pipeline/07_cloud_listening_sync.py`](app/pipeline/07_cloud_listening_sync.py) **$\color{#38BDF8}\text{(24/7 Cloud Listening Sync & Autonomous Model Audit)}$**
+### **$\color{#38BDF8}\text{7.}$** [`app/pipeline/07_cloud_listening_sync.py`](app/pipeline/07_cloud_listening_sync.py) **$\color{#38BDF8}\text{(24/7 Cloud Listening Sync and Autonomous Model Audit)}$**
 
 - Headless Spotify OAuth ingestion running twice hourly via GitHub Actions off-peak cron (`14,47 * * * *`).
 
